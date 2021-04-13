@@ -1,21 +1,27 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Drawing;
 
 namespace Game
 {
-    internal class Stone : GameObject
+    public class Stone : GameObject
     {
-        private static readonly Random rnd = new Random();
-        private readonly int currentVariation = rnd.Next(0, 100);
+        public override IReadOnlyList<Bitmap> Variations => variations;
         private readonly BasicDrawer drawer;
-        public Stone(int x, int y) : base(x, y) => drawer = new BasicDrawer(
-                new[] {
-                    Properties.Resources.stone_1,
-                    Properties.Resources.stone_2
-                },
-                CollectImage);
+        private static readonly IReadOnlyList<Bitmap> variations = new[]
+        {
+            Properties.Resources.stone_1,
+            Properties.Resources.stone_2
+        };
 
-        private Bitmap CollectImage(BasicDrawer drawer) => new Bitmap(currentVariation > 75 ? drawer.Variations[1] : drawer.Variations[0]);
+        public Stone(int x, int y) : base(x, y)
+        {
+            var variationRandomizer = Utils.GetRandomInt();
+            drawer = new BasicDrawer(
+                variationRandomizer > 75 ? Variations[1] : Variations[0],
+                CollectImage);
+        }
+
+        private Bitmap CollectImage(BasicDrawer drawer) => new Bitmap(drawer.Sprite);
 
         public override BasicDrawer GetDrawer() => drawer;
     }

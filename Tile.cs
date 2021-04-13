@@ -1,50 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 
 namespace Game
 {
-    public class Tile:IDrawable
+    public class Tile : IDrawable
     {
-        static Random rnd = new Random();
+        public IReadOnlyList<Bitmap> Variations => variations;
         public int x, y;
-        bool IsVisible = true;
-        bool IsUnknown=false;
-        private BasicDrawer drawer;
+        private readonly bool IsVisible = true;
+        private readonly bool IsUnknown = false;
+        private readonly BasicDrawer drawer;
         public Level Level;
-        private List<GameObject> gameObjects = new List<GameObject>(3);
-        private int currentVariation = rnd.Next(0, 100);
-        public List<GameObject> GameObjects
-        {
-            get => gameObjects;
-            private set
-            {
-                gameObjects = value;
-            }
-        }
+        private static readonly IReadOnlyList<Bitmap> variations = new[]
+                {
+            Properties.Resources.grass_1,
+            Properties.Resources.grass_2,
+            Properties.Resources.grass_3
+        };
+
+        public List<GameObject> GameObjects { get; private set; } = new List<GameObject>(3);
 
         public Tile(int x, int y, Level level)
         {
             this.x = x;
             this.y = y;
             Level = level;
+            var variantRandomiser = Utils.GetRandomInt();
             drawer = new BasicDrawer(
-                new[]
-                {
-                    Properties.Resources.grass_1,
-                    Properties.Resources.grass_2,
-                    Properties.Resources.grass_3
-                },
+                variantRandomiser < 10 ? Variations[1] : variantRandomiser > 75 ? Variations[2] : Variations[0],
                 CollectImage
             );
         }
 
         private Bitmap CollectImage(BasicDrawer drawer)
         {
-            var mainImage = new Bitmap(currentVariation < 10 ? drawer.Variations[1] : currentVariation > 75 ? drawer.Variations[2] : drawer.Variations[0]);
-            using(var g = Graphics.FromImage(mainImage))
+            var mainImage = new Bitmap(drawer.Sprite);
+            using (var g = Graphics.FromImage(mainImage))
             {
-                foreach (var gameObject in gameObjects)
+                foreach (var gameObject in GameObjects)
                 {
                     g.DrawImage(gameObject.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
                 }
@@ -52,7 +45,7 @@ namespace Game
             return mainImage;
         }
 
-        public void ClearTile() => gameObjects = new List<GameObject>();
+        public void ClearTile() => GameObjects = new List<GameObject>();
         public BasicDrawer GetDrawer() => drawer;
     }
 }

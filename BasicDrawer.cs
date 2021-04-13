@@ -1,17 +1,16 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
+﻿using System.Drawing;
 
 namespace Game
 {
     public class BasicDrawer
     {
         public delegate Bitmap ViewConstructor(BasicDrawer drawer);
-        public readonly Bitmap[] Variations;
+        public readonly Bitmap Sprite;
         public ViewConstructor ConstructorView;
 
-        public BasicDrawer(Bitmap[] variations, ViewConstructor constructor)
+        public BasicDrawer(Bitmap sprite, ViewConstructor constructor)
         {
-            Variations = variations;
+            Sprite = sprite;
             ConstructorView = constructor;
         }
 

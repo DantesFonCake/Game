@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 
 namespace Game
 {
@@ -7,7 +8,7 @@ namespace Game
         private bool isCollectable = false;
         private bool isRigid = true;
         public Direction Direction { get; protected set; } = Direction.Down;
-        public Point Position { get; protected set; }
+        public Point Position { get; set; }
         public int X
         {
             get => Position.X;
@@ -39,6 +40,8 @@ namespace Game
                     IsRigid = false;
             }
         }
+
+        public abstract IReadOnlyList<Bitmap> Variations { get; }
 
         public GameObject(int x, int y) : this(new Point(x, y))
         {

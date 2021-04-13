@@ -1,47 +1,35 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace Game
 {
     public abstract class Entity : GameObject
-    {        
+    {
         public event EventHandler<EntityMovementArgs> Moved;
-        public BasicDrawer drawer { get; protected set; }
-        protected int CurrentVariation = 0;
-        public Entity(int x,int y) : base(x,y)
+        public BasicDrawer Drawer { get; protected set; }
+
+        public Entity(int x, int y) : base(x, y)
         {
         }
 
-        public void Move(Direction direction)
+        protected Entity(Point position) : base(position)
         {
-            var dX = 0;
-            var dY = 0;
+        }
+
+        public virtual void Move(Direction direction)
+        {
             Direction = direction;
-            switch (direction)
-            {
-                case Direction.Left:
-                    dX = -1;
-                    break;
-                case Direction.Right:
-                    dX = 1;
-                    break;
-                case Direction.Up:
-                    dY = -1;
-                    break;
-                case Direction.Down:
-                    dY = 1;
-                    break;
-            }
-            OnMove(dX, dY);
+            OnMove(Utils.GetOffsetFromDirection(direction));
         }
 
-        private void OnMove(int dX, int dY)
+        private void OnMove((int dX, int dY) offset)
         {
-            if (Moved != null) 
+            if (Moved != null)
             {
-                var args = new EntityMovementArgs(dX, dY);
+                var args = new EntityMovementArgs(offset.dX, offset.dY);
                 Moved.Invoke(this, args);
-            }       
+            }
         }
 
         protected Bitmap CollectImage(BasicDrawer drawer)
@@ -53,7 +41,7 @@ namespace Game
                 Direction.Up => RotateFlipType.RotateNoneFlipY,
                 _ => RotateFlipType.RotateNoneFlipNone,
             };
-            var image = new Bitmap(drawer.Variations[CurrentVariation]);
+            var image = new Bitmap(drawer.Sprite);
             image.RotateFlip(rotate);
             return image;
         }

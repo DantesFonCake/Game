@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace Game
 {
@@ -14,20 +15,20 @@ namespace Game
             private set => Map[XSize * y + x] = value;
         }
 
+        public bool InBounds(Point point) => bounds.Contains(point);
+        public bool InBounds(int x, int y) => bounds.Contains(x, y);
+
+        private Rectangle bounds;
+
         public Level(int xSize, int ySize)
         {
             XSize = xSize;
             YSize = ySize;
+            bounds = new Rectangle(0, 0, XSize, YSize);
             Map = new Tile[xSize * ySize];
             for (var y = 0; y < ySize; y++)
-            {
                 for (var x = 0; x < xSize; x++)
-                {
                     this[x, y] = new Tile(x, y, this);
-                    if (x == 0 || x == XSize - 1 || y == 0 || y == YSize - 1)
-                        PlaceObject(new Stone(x, y));
-                }
-            }
         }
 
         public void PlaceObject(GameObject gameObject)
@@ -40,13 +41,13 @@ namespace Game
         private void Entity_Moved(object sender, EntityMovementArgs e)
         {
             var entity = (Entity)sender;
-            this[entity.X, entity.Y].ClearTile();
+            this[entity.X, entity.Y].GameObjects.Remove(entity);
             var nextX = entity.Position.X + e.DX;
             var nextY = entity.Position.Y + e.DY;
-            if (nextX < XSize && nextX >= 0 && this[nextX, nextY].GameObjects.TrueForAll((x) => !x.IsRigid))
-                entity.X = nextX;
-            if (nextY < YSize && nextY >= 0 && this[nextX, nextY].GameObjects.TrueForAll((x) => !x.IsRigid))
-                entity.Y = nextY;
+            if (InBounds(nextX, nextY) && this[nextX, nextY].GameObjects.TrueForAll((x) => !x.IsRigid))
+            {
+                entity.Position = new Point(nextX, nextY);
+            }
             this[entity.X, entity.Y].GameObjects.Add(entity);
         }
 
