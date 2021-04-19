@@ -5,7 +5,6 @@ namespace Game
 {
     public class Stone : GameObject
     {
-        public override IReadOnlyList<Bitmap> Variations => variations;
         private readonly BasicDrawer drawer;
         private static readonly IReadOnlyList<Bitmap> variations = new[]
         {
@@ -17,7 +16,7 @@ namespace Game
         {
             var variationRandomizer = Utils.GetRandomInt();
             drawer = new BasicDrawer(
-                variationRandomizer > 75 ? Variations[1] : Variations[0],
+                variationRandomizer > 75 ? variations[1] : variations[0],
                 CollectImage);
         }
 

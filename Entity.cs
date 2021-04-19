@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace Game
 {
@@ -8,31 +9,47 @@ namespace Game
     {
         public event EventHandler<EntityMovementArgs> Moved;
         public BasicDrawer Drawer { get; protected set; }
+        public event EventHandler<AttackEventArgs> Attacked;
+        public Attack Attack { get; protected set; }
+        public double Health { get; protected set; }
+        public bool IsAlive => (int)Health > 0;
+        public bool IsPlayerControlled { get; protected set; }
+        public IReadOnlyDictionary<AttackType, int> Resistances { get; }     
 
-        public Entity(int x, int y) : base(x, y)
+        private readonly Dictionary<AttackType, int> resistances;
+
+        public Entity(int x, int y, int health = 100, Dictionary<AttackType, int> resistances = null) : base(x, y)
         {
+            this.resistances = resistances??new Dictionary<AttackType, int>();
+            Health = health;
         }
 
-        protected Entity(Point position) : base(position)
+        public Entity(Point position, int health = 100, Dictionary<AttackType, int> resistances = null) : base(position)
         {
+            this.resistances = resistances ?? new Dictionary<AttackType, int>();
+            Health = health;
+        }
+
+        public virtual void MoveTo(Point newPosition)
+        {
+            var offset=newPosition - new Size(Position);
+            Direction = Utils.GetDirectionFromOffset(offset);
+            OnMove(offset);
         }
 
         public virtual void Move(Direction direction)
         {
             Direction = direction;
-            OnMove(Utils.GetOffsetFromDirection(direction));
+            var (dX, dY) = Utils.GetOffsetFromDirection(direction);
+            OnMove(dX,dY);
         }
 
-        private void OnMove((int dX, int dY) offset)
-        {
-            if (Moved != null)
-            {
-                var args = new EntityMovementArgs(offset.dX, offset.dY);
-                Moved.Invoke(this, args);
-            }
-        }
+        private void OnMove(int dX, int dY) => Moved?.Invoke(this, new EntityMovementArgs(dX, dY));
+        private void OnMove(Point offset) => OnMove(offset.X, offset.Y);
 
-        protected Bitmap CollectImage(BasicDrawer drawer)
+        public virtual void AttackPosition(Point position) => Attacked?.Invoke(this, new AttackEventArgs(Attack.GetPositions(position, Direction).Except(new[] { Position })));
+
+        protected virtual Bitmap CollectImage(BasicDrawer drawer)
         {
             var rotate = Direction switch
             {
@@ -46,5 +63,11 @@ namespace Game
             return image;
         }
 
+        public virtual void DealDamage(int damage, AttackType attackType)
+        {
+            if (IsAlive)
+                Health -= damage * ((float)100 - resistances.GetValueOrDefault(attackType, 0))/100;
+
+        }
     }
 }

@@ -41,8 +41,6 @@ namespace Game
             }
         }
 
-        public abstract IReadOnlyList<Bitmap> Variations { get; }
-
         public GameObject(int x, int y) : this(new Point(x, y))
         {
         }

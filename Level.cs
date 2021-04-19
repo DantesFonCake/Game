@@ -15,6 +15,11 @@ namespace Game
             private set => Map[XSize * y + x] = value;
         }
 
+        public Tile this[Point point]
+        {
+            get => this[point.X, point.Y];
+            private set => this[point.X, point.Y] = value;
+        }
         public bool InBounds(Point point) => bounds.Contains(point);
         public bool InBounds(int x, int y) => bounds.Contains(x, y);
 
@@ -35,20 +40,51 @@ namespace Game
         {
             this[gameObject.X, gameObject.Y].GameObjects.Add(gameObject);
             if (gameObject is Entity entity)
+            {
                 entity.Moved += Entity_Moved;
+                entity.Attacked += Entity_Attacked;
+            }
+        }
+
+        public bool CanMove(Point position, Direction direction)
+        {
+            var (dX, dY) = Utils.GetOffsetFromDirection(direction);
+            return CanMove(position, dX, dY);
+        }
+
+        public bool CanMove(Point position, int dX, int dY)
+        {
+            var nextX = position.X + dX;
+            var nextY = position.Y + dY;
+            return InBounds(nextX, nextY) && this[nextX, nextY].GameObjects.TrueForAll((x) => !x.IsRigid);
+        }
+
+        private void Entity_Attacked(object sender, AttackEventArgs e)
+        {
+            var attack = ((Entity)sender).Attack;
+            foreach (var point in e)
+            {
+                if (InBounds(point))
+                {
+                    foreach (var obj in this[point].GameObjects)
+                        if (obj is Entity entity)
+                        {
+                            entity.DealDamage(attack.Damage, attack.Type);
+                        }
+                    this[point].GameObjects.RemoveAll(x => x is Entity e && !e.IsAlive);
+                }
+            }
         }
 
         private void Entity_Moved(object sender, EntityMovementArgs e)
         {
             var entity = (Entity)sender;
-            this[entity.X, entity.Y].GameObjects.Remove(entity);
-            var nextX = entity.Position.X + e.DX;
-            var nextY = entity.Position.Y + e.DY;
-            if (InBounds(nextX, nextY) && this[nextX, nextY].GameObjects.TrueForAll((x) => !x.IsRigid))
+            if (CanMove(entity.Position, e.DX, e.DY))
             {
-                entity.Position = new Point(nextX, nextY);
+                this[entity.X, entity.Y].GameObjects.Remove(entity);
+                entity.Position = new Point(entity.X + e.DX, entity.Y + e.DY);
+                this[entity.X, entity.Y].GameObjects.Add(entity);
             }
-            this[entity.X, entity.Y].GameObjects.Add(entity);
         }
 
         public IEnumerator<Tile> GetEnumerator() => ((IEnumerable<Tile>)Map).GetEnumerator();

@@ -5,7 +5,6 @@ namespace Game
 {
     public interface IDrawable
     {
-        public IReadOnlyList<Bitmap> Variations { get; }
         public BasicDrawer GetDrawer();
     }
 }

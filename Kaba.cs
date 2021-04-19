@@ -1,18 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace Game
 {
     public class Kaba : Entity
     {
-        public override IReadOnlyList<Bitmap> Variations => variations;
 
-        private static readonly IReadOnlyList<Bitmap> variations = new[] { Properties.Resources.skull };
-
-        public Kaba(int x, int y) : base(x, y) => Drawer = new BasicDrawer(
-                Variations[0],
+        public Kaba(int x, int y) : base(x, y)
+        {
+            Drawer = new BasicDrawer(
+                Properties.Resources.skull,
                 CollectImage
-                );
+            );
+            var pattern = new[] { new Size(1, -1), new Size(1, 0), new Size(1, 1) };
+            Attack = new Attack(pattern, AttackType.Physical, 10);
+            Health = 100;
+            IsPlayerControlled = true;
+        }
 
         public override BasicDrawer GetDrawer() => Drawer;
 

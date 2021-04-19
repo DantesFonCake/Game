@@ -1,8 +1,6 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Game
 {
@@ -15,7 +13,7 @@ namespace Game
             Assert.IsTrue(HaveLevel(game));
         }
 
-        private static bool HaveLevel(GameModel game) => game.currentLevel != null && game.currentLevel.Map != null && game.currentLevel.Map.All(x => x != null);
+        private static bool HaveLevel(GameModel game) => game.CurrentLevel != null && game.CurrentLevel.Map != null && game.CurrentLevel.Map.All(x => x != null);
 
 
 
@@ -25,7 +23,7 @@ namespace Game
             var game = new GameModel(x, y, false);
             game.MoveToNextLevel(x, y);
             Assert.IsTrue(HaveLevel(game));
-            Assert.IsTrue(game.currentLevel.XSize == x && game.currentLevel.YSize == y);
+            Assert.IsTrue(game.CurrentLevel.XSize == x && game.CurrentLevel.YSize == y);
         }
     }
     public class EntityBasicTests
@@ -38,8 +36,8 @@ namespace Game
         {
             var entity = new Kaba(x, y);
             var game = new GameModel(sizeX, sizeY, false, entity);
-            game.currentLevel.PlaceObject(entity);
-            Assert.IsTrue(game.currentLevel[x, y].GameObjects.First() is Entity && ((Entity)game.currentLevel[x, y].GameObjects.First()) == entity);
+            game.CurrentLevel.PlaceObject(entity);
+            Assert.IsTrue(game.CurrentLevel[x, y].GameObjects.First() is Entity && ((Entity)game.CurrentLevel[x, y].GameObjects.First()) == entity);
         }
 
         [Test]
@@ -61,7 +59,7 @@ namespace Game
             Assert.IsTrue(CheckForEntity(9, 9, entity, game));
         }
 
-        private static bool CheckForEntity(int x, int y, Entity entity, GameModel game) => entity.X == x && entity.Y == y && game.currentLevel[x, y].GameObjects.First() is Entity && (Entity)game.currentLevel[x, y].GameObjects.First() == entity;
+        private static bool CheckForEntity(int x, int y, Entity entity, GameModel game) => entity.X == x && entity.Y == y && game.CurrentLevel[x, y].GameObjects.First() is Entity && (Entity)game.CurrentLevel[x, y].GameObjects.First() == entity;
 
         [Test]
         public void Test_EntityCantGoOverRigidObject()
@@ -71,6 +69,18 @@ namespace Game
             var game = new GameModel(10, 10, false, entity, stone);
             entity.Move(Direction.Up);
             Assert.IsTrue(CheckForEntity(5, 5, entity, game));
+        }
+    }
+
+    public class AttackTests
+    {
+        [Test]
+        public void Test_AttackDealsDamage()
+        {
+            var entities = new[] { new Kaba(5, 5), new Kaba(5, 6) };
+            var game = new GameModel(10, 10, false, entities);
+            entities[0].AttackPosition(entities[0].Position);
+            Assert.IsTrue(entities[1].Health != 100);
         }
     }
 }

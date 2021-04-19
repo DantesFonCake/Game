@@ -6,7 +6,17 @@ namespace Game
     public class Tile : IDrawable
     {
         public IReadOnlyList<Bitmap> Variations => variations;
-        public int x, y;
+        public Point Position { get; set; }
+        public int X
+        {
+            get => Position.X;
+            set => Position = new Point(value, Y);
+        }
+        public int Y
+        {
+            get => Position.Y;
+            set => Position = new Point(X, value);
+        }
         private readonly bool IsVisible = true;
         private readonly bool IsUnknown = false;
         private readonly BasicDrawer drawer;
@@ -20,16 +30,19 @@ namespace Game
 
         public List<GameObject> GameObjects { get; private set; } = new List<GameObject>(3);
 
-        public Tile(int x, int y, Level level)
+        public Tile(Point position, Level level)
         {
-            this.x = x;
-            this.y = y;
+            Position = position;
             Level = level;
             var variantRandomiser = Utils.GetRandomInt();
             drawer = new BasicDrawer(
                 variantRandomiser < 10 ? Variations[1] : variantRandomiser > 75 ? Variations[2] : Variations[0],
                 CollectImage
             );
+        }
+
+        public Tile(int x, int y, Level level) : this(new Point(x, y), level)
+        {
         }
 
         private Bitmap CollectImage(BasicDrawer drawer)
@@ -39,7 +52,13 @@ namespace Game
             {
                 foreach (var gameObject in GameObjects)
                 {
-                    g.DrawImage(gameObject.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
+                    if (gameObject is Entity entity)
+                    {
+                        if (entity.IsAlive)
+                            g.DrawImage(entity.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
+                    }
+                    else
+                        g.DrawImage(gameObject.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
                 }
             }
             return mainImage;

@@ -1,27 +1,75 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Game
 {
     public class GameModel
     {
-        public Level currentLevel;
-        public List<Direction> SheduledPath = new List<Direction>();
+        public Level CurrentLevel { get; private set; }
+        public Entity SelectedEntity { get; private set; }
+        public bool ReadyToAttack { get; set; }
+        public List<Action> SheduledPath = new List<Action>();
+        public Step Step;
+
+        public Kaba Kaba = new Kaba(5, 5);
+        public Kaba Kaba2 = new Kaba(5, 6);
+        //public Hiro Hiro;
+        //public Naru Naru;
+        //public Hana Hana;
 
         public GameModel(int x, int y, bool generateWalls, params GameObject[] objects)
         {
-            currentLevel = new Level(x, y);
+            Step = new Step(Kaba.Position);
+            CurrentLevel = new Level(x, y);
             foreach (var obj in objects)
             {
-                currentLevel.PlaceObject(obj);
+                CurrentLevel.PlaceObject(obj);
             }
             if (generateWalls)
-                for (var yCoord = 0; yCoord < currentLevel.YSize; yCoord++)
-                    for (var xCoord = 0; xCoord < currentLevel.XSize; xCoord++)
-                        if (xCoord == 0 || xCoord == currentLevel.XSize - 1 || yCoord == 0 || yCoord == currentLevel.YSize - 1)
-                            currentLevel.PlaceObject(new Stone(xCoord, yCoord));
+                for (var yCoord = 0; yCoord < CurrentLevel.YSize; yCoord++)
+                    for (var xCoord = 0; xCoord < CurrentLevel.XSize; xCoord++)
+                        if (xCoord == 0 || xCoord == CurrentLevel.XSize - 1 || yCoord == 0 || yCoord == CurrentLevel.YSize - 1)
+                            CurrentLevel.PlaceObject(new Stone(xCoord, yCoord));
+        }
+        public GameModel(int x, int y) : this(x, y, true)
+        {
+            CurrentLevel.PlaceObject(Kaba);
+            CurrentLevel.PlaceObject(Kaba2);
+        }
+
+        public void SheduleMove(Direction direction)
+        {
+            if (CurrentLevel.CanMove(Step.Destination, direction))
+                Step.AddDirection(direction);
+        }
+
+        public async void CommitStep() => await Task.Run(() =>
+                                        {
+                                            foreach (var direction in Step.CommitStep())
+                                            {
+                                                MoveHeroesInDirection(direction);
+                                                Thread.Sleep(700);
+                                            }
+                                        });
+
+        public void MoveHeroesInDirection(Direction direction)
+        {
+            lock (Kaba)
+                lock (Kaba2)
+                {
+                    var kabaOldPosition = Kaba.Position;
+                    Kaba.Move(direction);
+                    Kaba2.MoveTo(kabaOldPosition);
+
+                }
         }
 
         //TODO
-        public void MoveToNextLevel(int x, int y) => currentLevel = new Level(x, y);
+        public void MoveToNextLevel(int x, int y) => CurrentLevel = new Level(x, y);
+        public void SelectEntity(Point point) => SelectedEntity = CurrentLevel[point].GameObjects.Where(x => x is Entity).Select(x => x as Entity).FirstOrDefault();
     }
 }

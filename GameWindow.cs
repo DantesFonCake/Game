@@ -6,23 +6,20 @@ namespace Game
     public partial class GameWindow : Form
     {
         private readonly Timer Timer;
-        private readonly GameModel game;
-        private readonly Kaba kaba;
+        private readonly GameModel Game;
         private readonly ScaledViewPanel panel;
         private bool imageUpdateComplete = false;
         public GameWindow()
-        {
-            kaba = new Kaba(5, 5);
-            game = new GameModel(21, 21, true, kaba);
-            panel = new ScaledViewPanel(game) { Dock = DockStyle.Fill };
-            InitializeComponent();
+        {          
+            Game = new GameModel(21, 21);
+            panel = new ScaledViewPanel(Game) { Dock = DockStyle.Fill };
             Controls.Add(panel);
             DoubleBuffered = true;
             Width = 1100;
             Height = 1100;
             Timer = new Timer
             {
-                Interval = 1000 / 60
+                Interval = 1000 / 120
             };
             Timer.Tick += TimerTick;
             Load += (s, e) => Timer.Start();
@@ -43,16 +40,26 @@ namespace Game
                 switch (e.KeyCode)
                 {
                     case Keys.W:
-                        kaba.Move(Direction.Up);
+                        //Game.MoveHeroesInDirection(Direction.Up);
+                        Game.SheduleMove(Direction.Up);
                         break;
                     case Keys.A:
-                        kaba.Move(Direction.Left);
+                        //Game.MoveHeroesInDirection(Direction.Left);
+                        Game.SheduleMove(Direction.Left);
                         break;
                     case Keys.S:
-                        kaba.Move(Direction.Down);
+                        //Game.MoveHeroesInDirection(Direction.Down);
+                        Game.SheduleMove(Direction.Down);
                         break;
                     case Keys.D:
-                        kaba.Move(Direction.Right);
+                        //Game.MoveHeroesInDirection(Direction.Right);
+                        Game.SheduleMove(Direction.Right);
+                        break;
+                    case Keys.Space:
+                        Game.CommitStep();
+                        break;
+                    case Keys.E:
+                        Game.ReadyToAttack = !Game.ReadyToAttack && Game.SelectedEntity != null && Game.SelectedEntity.IsPlayerControlled;
                         break;
                 }
                 imageUpdateComplete = false;
