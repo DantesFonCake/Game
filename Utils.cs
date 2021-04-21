@@ -15,15 +15,15 @@ namespace Game
 
         public static Direction GetDirectionFromOffset(int dX, int dY)
         => (dX, dY) switch
-            {
-                (-1, 0) => Direction.Left,
-                (1, 0) => Direction.Right,
-                (0, -1) => Direction.Up,
-                (0, 1) => Direction.Down,
-                _ => throw new ArgumentException(),
-            };
+        {
+            (-1, 0) => Direction.Left,
+            (1, 0) => Direction.Right,
+            (0, -1) => Direction.Up,
+            (0, 1) => Direction.Down,
+            _ => throw new ArgumentException(),
+        };
 
-        public static (int dX, int dY) GetOffsetFromDirection(Direction direction) 
+        public static (int dX, int dY) GetOffsetFromDirection(Direction direction)
         => direction switch
         {
             Direction.Left => (-1, 0),

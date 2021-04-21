@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
-
-namespace Game
+﻿namespace Game
 {
     public interface IDrawable
     {

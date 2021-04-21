@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System;
+using System.Drawing;
 using System.Linq;
 
 namespace Game
@@ -81,6 +82,38 @@ namespace Game
             var game = new GameModel(10, 10, false, entities);
             entities[0].AttackPosition(entities[0].Position);
             Assert.IsTrue(entities[1].Health != 100);
+        }
+    }
+
+    public class SteppingTests
+    {
+        [TestCase(Direction.Left)]
+        [TestCase(Direction.Right)]
+        [TestCase(Direction.Up)]
+        public void Test_StepWorks(Direction direction)
+        {
+            var game = new GameModel(10, 10);
+            var initialPosition = game.Kaba.Position;
+            game.SheduleMove(direction);
+            game.CommitStep();
+            while (!game.IsAccessible)
+                continue;
+            Assert.IsTrue(Utils.GetDirectionFromOffset(game.Kaba.Position - new Size(initialPosition)) == direction);
+        }
+
+        [Test]
+        public void Test_CantScheduleToUnrecheableTile()
+        {
+            var stone = new Stone(5, 4);
+            var game = new GameModel(10, 10, false, stone);
+            game.SheduleMove(Direction.Up);
+            Assert.IsTrue(game.Step.Length == 0);
+            game = new GameModel(10, 10, false);
+            for (var i = 0; i < 100; i++)
+            {
+                game.SheduleMove(Direction.Up);
+            }
+            Assert.IsTrue(game.Step.Length < 100);
         }
     }
 }

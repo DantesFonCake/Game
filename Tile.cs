@@ -47,20 +47,26 @@ namespace Game
 
         private Bitmap CollectImage(BasicDrawer drawer)
         {
+            if (IsUnknown)
+                return null;//TODO there will be sprite for unknown tile
             var mainImage = new Bitmap(drawer.Sprite);
-            using (var g = Graphics.FromImage(mainImage))
-            {
-                foreach (var gameObject in GameObjects)
+            if (IsVisible)
+                using (var g = Graphics.FromImage(mainImage))
                 {
-                    if (gameObject is Entity entity)
+                    foreach (var gameObject in GameObjects)
                     {
-                        if (entity.IsAlive)
-                            g.DrawImage(entity.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
+                        if (gameObject is Entity entity)
+                        {
+                            if (entity.IsAlive)
+                            {
+                                g.DrawImage(entity.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
+                                g.FillRectangle(Brushes.Green, 2, mainImage.Height - 9, (float)((double)(mainImage.Width - 4) / 100 * entity.Health), 8);
+                            }
+                        }
+                        else
+                            g.DrawImage(gameObject.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
                     }
-                    else
-                        g.DrawImage(gameObject.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
                 }
-            }
             return mainImage;
         }
 

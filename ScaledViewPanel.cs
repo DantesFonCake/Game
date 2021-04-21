@@ -68,7 +68,7 @@ namespace Game
                 if (!GameModel.ReadyToAttack)
                     GameModel.SelectEntity(mouseLogicalPos);
                 else
-                    GameModel.SelectedEntity.AttackPosition(mouseLogicalPos);
+                    GameModel.AttackPosition(mouseLogicalPos);
             }
         }
 

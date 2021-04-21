@@ -14,13 +14,13 @@ namespace Game
         public double Health { get; protected set; }
         public bool IsAlive => (int)Health > 0;
         public bool IsPlayerControlled { get; protected set; }
-        public IReadOnlyDictionary<AttackType, int> Resistances { get; }     
+        public IReadOnlyDictionary<AttackType, int> Resistances { get; }
 
         private readonly Dictionary<AttackType, int> resistances;
 
         public Entity(int x, int y, int health = 100, Dictionary<AttackType, int> resistances = null) : base(x, y)
         {
-            this.resistances = resistances??new Dictionary<AttackType, int>();
+            this.resistances = resistances ?? new Dictionary<AttackType, int>();
             Health = health;
         }
 
@@ -32,7 +32,7 @@ namespace Game
 
         public virtual void MoveTo(Point newPosition)
         {
-            var offset=newPosition - new Size(Position);
+            var offset = newPosition - new Size(Position);
             Direction = Utils.GetDirectionFromOffset(offset);
             OnMove(offset);
         }
@@ -41,7 +41,7 @@ namespace Game
         {
             Direction = direction;
             var (dX, dY) = Utils.GetOffsetFromDirection(direction);
-            OnMove(dX,dY);
+            OnMove(dX, dY);
         }
 
         private void OnMove(int dX, int dY) => Moved?.Invoke(this, new EntityMovementArgs(dX, dY));
@@ -66,7 +66,7 @@ namespace Game
         public virtual void DealDamage(int damage, AttackType attackType)
         {
             if (IsAlive)
-                Health -= damage * ((float)100 - resistances.GetValueOrDefault(attackType, 0))/100;
+                Health -= damage * ((float)100 - resistances.GetValueOrDefault(attackType, 0)) / 100;
 
         }
     }

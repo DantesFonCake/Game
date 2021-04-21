@@ -11,7 +11,8 @@ namespace Game
     {
         public Level CurrentLevel { get; private set; }
         public Entity SelectedEntity { get; private set; }
-        public bool ReadyToAttack { get; set; }
+        public bool ReadyToAttack { get; private set; }
+        public bool IsAccessible { get; private set; } = true;
         public List<Action> SheduledPath = new List<Action>();
         public Step Step;
 
@@ -41,20 +42,34 @@ namespace Game
             CurrentLevel.PlaceObject(Kaba2);
         }
 
+        public void PrepareForAttack() => ReadyToAttack = !ReadyToAttack && SelectedEntity != null && SelectedEntity.IsPlayerControlled;
+
+        public void AttackPosition(Point position)
+        {
+            SelectedEntity?.AttackPosition(position);
+            ReadyToAttack = false;
+        }
+
         public void SheduleMove(Direction direction)
         {
-            if (CurrentLevel.CanMove(Step.Destination, direction))
+            if (IsAccessible && CurrentLevel.CanMove(Step.Destination, direction))
                 Step.AddDirection(direction);
         }
 
-        public async void CommitStep() => await Task.Run(() =>
-                                        {
-                                            foreach (var direction in Step.CommitStep())
-                                            {
-                                                MoveHeroesInDirection(direction);
-                                                Thread.Sleep(700);
-                                            }
-                                        });
+        public async void CommitStep()
+        {
+            IsAccessible = false;
+            await Task.Run(() =>
+            {
+                foreach (var direction in Step.CommitStep())
+                {
+                    MoveHeroesInDirection(direction);
+                    Thread.Sleep(700);
+                }
+            });
+            IsAccessible = true;
+        }
+
 
         public void MoveHeroesInDirection(Direction direction)
         {
@@ -70,6 +85,10 @@ namespace Game
 
         //TODO
         public void MoveToNextLevel(int x, int y) => CurrentLevel = new Level(x, y);
-        public void SelectEntity(Point point) => SelectedEntity = CurrentLevel[point].GameObjects.Where(x => x is Entity).Select(x => x as Entity).FirstOrDefault();
+        public void SelectEntity(Point point)
+        {
+            if (IsAccessible)
+                SelectedEntity = CurrentLevel[point].GameObjects.Where(x => x is Entity).Select(x => x as Entity).FirstOrDefault();
+        }
     }
 }

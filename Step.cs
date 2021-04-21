@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Text;
 
 namespace Game
 {
     public class Step
     {
-        public Queue<Direction> Path = new Queue<Direction>(5);
+        private readonly Queue<Direction> Path = new Queue<Direction>(5);
         public Point Destination { get; private set; }
+        public int Length => Path.Count;
 
         public Step(Point initialPosition) => Destination = initialPosition;
 

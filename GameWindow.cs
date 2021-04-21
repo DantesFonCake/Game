@@ -10,7 +10,7 @@ namespace Game
         private readonly ScaledViewPanel panel;
         private bool imageUpdateComplete = false;
         public GameWindow()
-        {          
+        {
             Game = new GameModel(21, 21);
             panel = new ScaledViewPanel(Game) { Dock = DockStyle.Fill };
             Controls.Add(panel);
@@ -59,7 +59,7 @@ namespace Game
                         Game.CommitStep();
                         break;
                     case Keys.E:
-                        Game.ReadyToAttack = !Game.ReadyToAttack && Game.SelectedEntity != null && Game.SelectedEntity.IsPlayerControlled;
+                        Game.PrepareForAttack();
                         break;
                 }
                 imageUpdateComplete = false;

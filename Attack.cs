@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 
 namespace Game
 {
     public class Attack
     {
-        Size[] pattern;
+        private readonly Size[] pattern;
         public AttackType Type { get; protected set; }
         public int Damage { get; protected set; }
 
@@ -19,9 +17,6 @@ namespace Game
             Damage = damage;
         }
 
-        public IEnumerable<Point> GetPositions(Point position, Direction direction)
-        {
-            return pattern.Select(x => position + x).RotatePoints(direction, position);
-        }
+        public IEnumerable<Point> GetPositions(Point position, Direction direction) => pattern.Select(x => position + x).RotatePoints(direction, position);
     }
 }

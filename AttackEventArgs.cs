@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Game
 {
-    public class AttackEventArgs:IEnumerable<Point>
+    public class AttackEventArgs : IEnumerable<Point>
     {
         public readonly Point[] Points;
 
