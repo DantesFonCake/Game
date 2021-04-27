@@ -46,18 +46,9 @@ namespace Game
             }
         }
 
-        public bool CanMove(Point position, Direction direction)
-        {
-            var (dX, dY) = Utils.GetOffsetFromDirection(direction);
-            return CanMove(position, dX, dY);
-        }
+        public bool CanMove(Point position, Direction direction) => CanMove(position + Utils.GetOffsetFromDirection(direction));
 
-        public bool CanMove(Point position, int dX, int dY)
-        {
-            var nextX = position.X + dX;
-            var nextY = position.Y + dY;
-            return InBounds(nextX, nextY) && this[nextX, nextY].GameObjects.TrueForAll((x) => !x.IsRigid);
-        }
+        public bool CanMove(Point position) => InBounds(position) && this[position].GameObjects.TrueForAll(x => !x.IsRigid);
 
         private void Entity_Attacked(object sender, AttackEventArgs e)
         {
@@ -66,24 +57,30 @@ namespace Game
             {
                 if (InBounds(point))
                 {
-                    foreach (var obj in this[point].GameObjects)
-                        if (obj is Entity entity)
-                        {
-                            entity.DealDamage(attack.Damage, attack.Type);
-                        }
-                    this[point].GameObjects.RemoveAll(x => x is Entity e && !e.IsAlive);
+                    lock (this[point])
+                    {
+                        foreach (var obj in this[point].GameObjects)
+                            if (obj is Entity entity)
+                            {
+                                entity.DealDamage(attack.Damage, attack.Type);
+                            }
+                        this[point].GameObjects.RemoveAll(x => x is Entity e && !e.IsAlive);
+                    }
                 }
             }
         }
 
-        private void Entity_Moved(object sender, EntityMovementArgs e)
+        private void Entity_Moved(object sender, MovementArgs e)
         {
+
             var entity = (Entity)sender;
-            if (CanMove(entity.Position, e.DX, e.DY))
+            if (CanMove(entity.Position + new Size(e.DX, e.DY)))
             {
-                this[entity.X, entity.Y].GameObjects.Remove(entity);
+                lock (this[entity.Position])
+                    this[entity.Position].GameObjects.Remove(entity);
                 entity.Position = new Point(entity.X + e.DX, entity.Y + e.DY);
-                this[entity.X, entity.Y].GameObjects.Add(entity);
+                lock (this[entity.Position])
+                    this[entity.Position].GameObjects.Add(entity);
             }
         }
 

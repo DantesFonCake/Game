@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace Game
 {
@@ -10,8 +12,28 @@ namespace Game
 
         public static int GetRandomInt(int min = 0, int max = 100) => random.Next(min, max);
 
-        public static Direction GetDirectionFromOffset(Point offset) => GetDirectionFromOffset(offset.X, offset.Y);
+        public static Direction GetDirectionFromOffset(this Point offset) => GetDirectionFromOffset(offset.X, offset.Y);
+        public static Direction KeyCodeToDirection(this Keys keyCode)
+            => keyCode switch
+            {
+                Keys.W => Direction.Up,
+                Keys.D => Direction.Right,
+                Keys.A => Direction.Left,
+                Keys.S => Direction.Down,
+                _ => Direction.None
+            };
 
+        public static IEnumerable<Point> GetAdjancent(this Point point)
+        {
+            var offsets = new[] { new Size(-1, 0), new Size(1, 0), new Size(0, 1), new Size(0, -1) };
+            return offsets.Select(x => point + x);
+        }
+
+        public static IEnumerable<Size> GetRadius(int radius)
+        {
+            var sizes = Enumerable.Range(0, radius).Select(x => new Size(x, 0));
+            return Enumerable.Range(0, radius * 8 + 1).SelectMany(x => sizes.RotateSizes(x * 2 * Math.PI / (radius * 8))).Distinct();
+        }
 
         public static Direction GetDirectionFromOffset(int dX, int dY)
         => (dX, dY) switch
@@ -20,20 +42,20 @@ namespace Game
             (1, 0) => Direction.Right,
             (0, -1) => Direction.Up,
             (0, 1) => Direction.Down,
-            _ => throw new ArgumentException(),
+            _ => Direction.None,
         };
 
-        public static (int dX, int dY) GetOffsetFromDirection(Direction direction)
+        public static Size GetOffsetFromDirection(this Direction direction)
         => direction switch
         {
-            Direction.Left => (-1, 0),
-            Direction.Right => (1, 0),
-            Direction.Up => (0, -1),
-            Direction.Down => (0, 1),
+            Direction.Left => new Size(-1, 0),
+            Direction.Right => new Size(1, 0),
+            Direction.Up => new Size(0, -1),
+            Direction.Down => new Size(0, 1),
             _ => throw new ArgumentException(),
         };
 
-        public static double GetAngleFromDirection(Direction direction) => direction switch
+        public static double GetAngleFromDirection(this Direction direction) => direction switch
         {
             Direction.Right => 0,
             Direction.Up => -Math.PI / 2,
@@ -48,9 +70,21 @@ namespace Game
             var cosine = Math.Cos(angle);
             foreach (var point in points)
             {
-                var x = (float)point.X - origin.X;
-                var y = (float)point.Y - origin.Y;
-                yield return Point.Truncate(new PointF((float)(x * cosine - y * sine + origin.X), (float)(x * sine + y * cosine + origin.Y)));
+                var x = (double)point.X - origin.X;
+                var y = (double)point.Y - origin.Y;
+                yield return Point.Round(new PointF((float)(x * cosine - y * sine + origin.X), (float)(x * sine + y * cosine + origin.Y)));
+            }
+        }
+
+        public static IEnumerable<Size> RotateSizes(this IEnumerable<Size> sizes, double angle)
+        {
+            var sine = Math.Sin(angle);
+            var cosine = Math.Cos(angle);
+            foreach (var size in sizes)
+            {
+                var x = (double)size.Width;
+                var y = (double)size.Height;
+                yield return Size.Round(new SizeF((float)(x * cosine - y * sine), (float)(x * sine + y * cosine)));
             }
         }
 

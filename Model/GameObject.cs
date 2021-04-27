@@ -2,7 +2,7 @@
 
 namespace Game
 {
-    public abstract class GameObject : IDrawable
+    public abstract class GameObject : IDrawable, IPlaceable
     {
         private bool isCollectable = false;
         private bool isRigid = true;
@@ -25,7 +25,7 @@ namespace Game
             {
                 isRigid = value;
                 if (isRigid)
-                    IsCollectable = false;
+                    isCollectable = false;
             }
         }
 
@@ -36,7 +36,7 @@ namespace Game
             {
                 isCollectable = value;
                 if (isCollectable)
-                    IsRigid = false;
+                    isRigid = false;
             }
         }
 
@@ -47,5 +47,6 @@ namespace Game
         public GameObject(Point position) => Position = position;
 
         public abstract BasicDrawer GetDrawer();
+        public void PlaceItself(Level level) => level.PlaceObject(this);
     }
 }

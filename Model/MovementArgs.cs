@@ -1,9 +1,9 @@
 ﻿namespace Game
 {
-    public class EntityMovementArgs
+    public class MovementArgs
     {
         public readonly int DX, DY;
-        public EntityMovementArgs(int dX, int dY)
+        public MovementArgs(int dX, int dY)
         {
             DX = dX;
             DY = dY;

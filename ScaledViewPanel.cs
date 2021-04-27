@@ -9,10 +9,16 @@ namespace Game
 {
     public class ScaledViewPanel : Panel
     {
-        //private readonly ScenePainter painter;
         private readonly GameModel GameModel;
+        private readonly Controller Controller;
 
-        public ScaledViewPanel(GameModel gameModel) : this() => GameModel = gameModel;
+        public ScaledViewPanel(GameModel gameModel, Controller controller)
+        {
+            GameModel = gameModel;
+            Controller = controller;
+            FitToWindow = true;
+            zoomScale = 1f;
+        }
 
         private PointF centerLogicalPos;
         private Point mouseLogicalPos;
@@ -23,8 +29,7 @@ namespace Game
 
         public ScaledViewPanel()
         {
-            FitToWindow = true;
-            zoomScale = 1f;
+
         }
 
         public Point MouseLogicalPos => mouseLogicalPos;
@@ -61,15 +66,10 @@ namespace Game
         protected override void OnMouseClick(MouseEventArgs e)
         {
             base.OnMouseClick(e);
+
             if (e.Button == MouseButtons.Middle)
                 FitToWindow = true;
-            else if (e.Button == MouseButtons.Left)
-            {
-                if (!GameModel.ReadyToAttack)
-                    GameModel.SelectEntity(mouseLogicalPos);
-                else
-                    GameModel.AttackPosition(mouseLogicalPos);
-            }
+            Controller.HandleMouseClick(e.Button, MouseLogicalPos);
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -116,7 +116,7 @@ namespace Game
                     : ClientSize.Height / sceneSize.Height;
                 centerLogicalPos = new PointF(sceneSize.Width / 2, sceneSize.Height / 2);
             }
-
+            CenterLogicalPos = TileCoordinatesToWindow(GameModel.Snake.Position);
             var shift = GetShift();
             g.ResetTransform();
             g.TranslateTransform(shift.X, shift.Y);
@@ -128,14 +128,41 @@ namespace Game
             }
 
             if (GameModel.ReadyToAttack)
-                foreach (var point in GameModel.SelectedEntity.Attack.GetPositions(mouseLogicalPos, GameModel.SelectedEntity.Direction))
-                {
-                    var coords = TileCoordinatesToWindow(point);
-                    g.DrawRectangle(new Pen(Brushes.Red, 5), coords.X, coords.Y, tileSize, tileSize);
-                }
-            DrawPath(g, Color.Black, GameModel.Step.GetPreview(GameModel.Kaba.Position));
+            {
+                var attack = GameModel.SelectedEntity.Attack;
+                var specificColor = GameModel.SelectedEntity.GetDrawer().SpecificColor;
+                if(GameModel.IsAccessible)
+                    FillRectangles(g, attack.PossibleArea.Select(x => GameModel.SelectedEntity.Position + x), Color.FromArgb(64, specificColor));
+                if (GameModel.SelectedEntity.Attack.PossibleArea
+                .Select(x => GameModel.SelectedEntity.Position + x)
+                .Contains(MouseLogicalPos))
+                    DrawRectangles(g, attack.GetPositions(mouseLogicalPos, GameModel.SelectedEntity.Direction), specificColor, 5);
+            }
+            DrawPath(g, Color.Black, GameModel.Step.GetPathPreview(GameModel.Snake));
+            foreach (var hero in GameModel.Snake.Heroes)
+            {
+                DrawRectangles(g, GameModel.Step.GetAttackPreview(hero), Color.FromArgb(128, hero.GetDrawer().SpecificColor), 4);
+            }
 
         }
+
+        private void DrawRectangles(Graphics g, IEnumerable<Point> points, Color color, int borderWidth)
+        {
+            foreach (var point in points)
+            {
+                var coords = TileCoordinatesToWindow(point);
+                g.DrawRectangle(new Pen(color, borderWidth), coords.X, coords.Y, tileSize, tileSize);
+            }
+        }
+        private void FillRectangles(Graphics g, IEnumerable<Point> points, Color color)
+        {
+            foreach (var point in points)
+            {
+                var coords = TileCoordinatesToWindow(point);
+                g.FillRectangle(new SolidBrush(color), coords.X, coords.Y, tileSize, tileSize);
+            }
+        }
+
 
         private PointF TileCoordinatesToWindow(Point coords)
         {

@@ -7,12 +7,14 @@ namespace Game
     {
         private readonly Timer Timer;
         private readonly GameModel Game;
+        private readonly Controller Controller;
         private readonly ScaledViewPanel panel;
         private bool imageUpdateComplete = false;
         public GameWindow()
         {
             Game = new GameModel(21, 21);
-            panel = new ScaledViewPanel(Game) { Dock = DockStyle.Fill };
+            Controller = new Controller(Game);
+            panel = new ScaledViewPanel(Game,Controller) { Dock = DockStyle.Fill };
             Controls.Add(panel);
             DoubleBuffered = true;
             Width = 1100;
@@ -37,31 +39,8 @@ namespace Game
         {
             if (imageUpdateComplete)
             {
-                switch (e.KeyCode)
-                {
-                    case Keys.W:
-                        //Game.MoveHeroesInDirection(Direction.Up);
-                        Game.SheduleMove(Direction.Up);
-                        break;
-                    case Keys.A:
-                        //Game.MoveHeroesInDirection(Direction.Left);
-                        Game.SheduleMove(Direction.Left);
-                        break;
-                    case Keys.S:
-                        //Game.MoveHeroesInDirection(Direction.Down);
-                        Game.SheduleMove(Direction.Down);
-                        break;
-                    case Keys.D:
-                        //Game.MoveHeroesInDirection(Direction.Right);
-                        Game.SheduleMove(Direction.Right);
-                        break;
-                    case Keys.Space:
-                        Game.CommitStep();
-                        break;
-                    case Keys.E:
-                        Game.PrepareForAttack();
-                        break;
-                }
+                Controller.HandleKeyPress(e.KeyCode);
+                
                 imageUpdateComplete = false;
             }
 

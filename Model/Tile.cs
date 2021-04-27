@@ -59,8 +59,7 @@ namespace Game
                         {
                             if (entity.IsAlive)
                             {
-                                g.DrawImage(entity.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));
-                                g.FillRectangle(Brushes.Green, 2, mainImage.Height - 9, (float)((double)(mainImage.Width - 4) / 100 * entity.Health), 8);
+                                g.DrawImage(entity.GetDrawer().GetView(), new Rectangle(Point.Empty, mainImage.Size));                                
                             }
                         }
                         else
