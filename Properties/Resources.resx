@@ -127,6 +127,33 @@
   <data name="grass_3" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\textures\grass_3.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Hana_Front" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\hana_front.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Hana_Front_FaceOnly" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\hana_front_faceonly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Hiro_Front" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\hiro_front.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Hiro_Front_FaceOnly" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\hiro_front_faceonly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icon_placeholder" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\icon_placeholder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Kaba_Front" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\kaba_front.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Kaba_Front_FaceOnly" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\kaba_front_faceonly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Naru_Front" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\naru_front.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Naru_Front_FaceOnly" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\naru_front_faceonly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="skull" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\textures\skull.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

@@ -1,25 +1,27 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 
-namespace Game
+namespace Game.Model
 {
-    public class Hiro : Entity
+    public class Hiro : PlayerControlledEntity
     {
-        static readonly Bitmap Sprite = Properties.Resources.skull;
-        readonly BasicDrawer drawer;
-        public Hiro(Point position) : base(position)
+        public Hiro(Point position) : base(position,100,null)
         {
-            drawer = new BasicDrawer(Sprite, CollectImage,Color.Blue);
-            Health = 100;
-            IsPlayerControlled = true;
+            Drawer = new BasicDrawer(Sprite, CollectImage,Color.Blue);
+            Name = "Hiro";
             var pattern = new[] { new Size(-1, -1), new Size(0, 0), new Size(1, -1), new Size(1, 1), new Size(-1, 1) };
-            Attack = new Attack(pattern, AttackType.Physical, 1000, 6,true);
+            EAttack = new Attack(pattern, AttackType.Physical, 10, 6,true);
+            pattern = new[] { new Size(0, 0) };
+            QAttack = new Attack(pattern, AttackType.Physical, 30, 7, true);
+            rangeOfVision = 9;
         }
 
         public Hiro(int x, int y) : this(new Point(x, y))
         {
         }
 
-        public override BasicDrawer GetDrawer() => drawer;
+        public override BasicDrawer Drawer { get; protected set; }
+
+        public override Bitmap Sprite => Properties.Resources.Hiro_Front_FaceOnly;
     }
 }

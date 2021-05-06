@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
-namespace Game
+namespace Game.Model
 {
-    public class Step
+    public partial class Step
     {
-        private readonly LinkedList<(object entity,ActionType type,Action action)> Actions = new LinkedList<(object, ActionType, Action)>();
-        private readonly Dictionary<IAttacker, IEnumerable<Point>> attacksPreviews = new Dictionary<IAttacker, IEnumerable<Point>>();
-        private readonly Dictionary<IMoveable, LinkedList<Point>> paths = new Dictionary<IMoveable, LinkedList<Point>>();
-        public bool IsMovePossible(IMoveable moveable, Direction direction)
+        private readonly LinkedList<(Entity entity, ActionType type, Action action)> actions = new LinkedList<(Entity, ActionType, Action)>();
+        private readonly Dictionary<Entity, LinkedList<IEnumerable<Point>>> attacksPreviews = new Dictionary<Entity, LinkedList<IEnumerable<Point>>>();
+        private readonly Dictionary<Entity, LinkedList<Point>> paths = new Dictionary<Entity, LinkedList<Point>>();
+        private readonly Dictionary<PlayerControlledEntity, Ghost> ghosts = new Dictionary<PlayerControlledEntity, Ghost>();
+
+        public IReadOnlyDictionary<PlayerControlledEntity, Ghost> Ghosts => ghosts;
+
+        public bool IsMovePossible(Entity moveable, Direction direction)
         {
             if (paths.ContainsKey(moveable))
             {
@@ -19,7 +23,7 @@ namespace Game
             }
             return true;
         }
-        public bool TryGetEndPosition(IMoveable movable, out Point endPosition)
+        public bool TryGetEndPosition(Entity movable, out Point endPosition)
         {
             if (paths.TryGetValue(movable, out var position))
             {
@@ -30,24 +34,57 @@ namespace Game
             return false;
         }
 
-        public void ScheduleAttack(Entity entity, Point position, Direction direction)
+        public void ScheduleAttack(Entity entity, Point position, Direction direction, Point initialPosition)
         {
-            var originalPosition = entity.Position;
             if (!entity.Attack.IsRanged)
-                Actions.AddLast((entity, ActionType.NotPreviewable, () => entity.MoveTo(position)));
-            Actions.AddLast((entity,ActionType.Attack,() => entity.AttackPosition(position, direction)));
-            if(!entity.Attack.IsRanged)
-                Actions.AddLast((entity, ActionType.NotPreviewable, () => entity.MoveTo(originalPosition)));
+                actions.AddLast((entity, ActionType.NotPreviewable, (Action)(() =>
+                {
+                    entity.MoveTo(position);
+                    entity.Rotate(direction);
+                }
+                )));
+            actions.AddLast((entity, ActionType.Attack, () => entity.AttackPosition(position, direction)));
+            var originalDirection = entity.Direction;
+            if (!entity.Attack.IsRanged)
+                actions.AddLast((entity, ActionType.NotPreviewable, (Action)(() =>
+                {
+                    entity.MoveTo(initialPosition);
+                    entity.Rotate(originalDirection);
+                }
+                )));
             var attackPreview = entity.Attack.GetPositions(position, direction);
             if (!attacksPreviews.ContainsKey(entity))
-                attacksPreviews[entity] = attackPreview;
-            else
-                attacksPreviews[entity].Concat(attackPreview).Distinct();
+                attacksPreviews[entity] = new LinkedList<IEnumerable<Point>>();
+            attacksPreviews[entity].AddLast(attackPreview);
+
         }
 
-        public void ScheduleMove(IMoveable entity, Direction direction)
+        public void ScheduleMove(Snake snake, Direction direction)
         {
-            Actions.AddLast((entity,ActionType.Move,() => entity.Move(direction)));
+            var d = direction.Copy();
+            Action action = () =>
+              {
+                  snake.MoveInDirection(d);
+              };
+            var head = snake.Heroes.First();
+            actions.AddLast((head, ActionType.Move, action));
+            AddPathPreview(head, direction);
+            if (!Ghosts.ContainsKey(head))
+                ghosts[head] = head.Ghost;
+            var initialPosition = ghosts[head].Position;
+            ghosts[head].Move(direction);
+            foreach (var entity in snake.Heroes.Skip(1))
+            {
+                if (!Ghosts.ContainsKey(entity))
+                    ghosts[entity] = entity.Ghost;
+                direction = Utils.GetDirectionFromOffset(initialPosition - new Size(ghosts[entity].Position));
+                initialPosition = ghosts[entity].Position;
+                ghosts[entity].Move(direction);
+            }
+        }
+
+        private void AddPathPreview(Entity entity, Direction direction)
+        {
             if (paths.ContainsKey(entity))
                 paths[entity].AddLast(paths[entity].Last.Value + Utils.GetOffsetFromDirection(direction));
             else
@@ -57,46 +94,48 @@ namespace Game
                 paths[entity].AddLast(entity.Position + Utils.GetOffsetFromDirection(direction));
             }
         }
+        public void ScheduleMove(Entity entity, Direction direction) => actions.AddLast((entity, ActionType.Move, () => entity.Move(direction)));//AddPathPreview(entity, direction);
 
         public bool UndoScheduled()
         {
-            if (Actions.Count == 0)
+            if (actions.Count == 0)
                 return false;
-            var (entity, type, action) = Actions.Last.Value;
+            var (entity, type, action) = actions.Last.Value;
             if (type == ActionType.Move)
-                paths[entity as IMoveable].RemoveLast();
+                paths[entity].RemoveLast();
             else if (type == ActionType.Attack)
-                attacksPreviews.Remove(entity as IAttacker);
-            Actions.RemoveLast();
+                attacksPreviews[entity].RemoveLast();
+            actions.RemoveLast();
             return true;
         }
 
         public bool CommitStep()
         {
-            if (Actions.Count == 0)
+            if (actions.Count == 0)
                 return false;
-            var (entity, type, action) = Actions.First.Value;
+            var (entity, type, action) = actions.First.Value;
             action();
             if (type == ActionType.Move)
-                paths[entity as IMoveable].RemoveFirst();
+                paths[entity].RemoveFirst();
             else if (type == ActionType.Attack)
-                attacksPreviews.Remove(entity as IAttacker);
-            Actions.RemoveFirst();
+                attacksPreviews[entity].RemoveFirst();
+            actions.RemoveFirst();
             return true;
         }
 
-        public IEnumerable<Point> GetPathPreview(IMoveable entity)
+        public IEnumerable<Point> GetPathPreview(Entity entity)
         {
             if (paths.ContainsKey(entity))
                 foreach (var point in paths[entity])
                     yield return point;
         }
 
-        public IEnumerable<Point> GetAttackPreview(IAttacker entity)
+        public IEnumerable<Point> GetAttackPreview(Entity entity)
         {
             if (attacksPreviews.ContainsKey(entity))
-                foreach (var point in attacksPreviews[entity])
-                    yield return point;
+                foreach (var previews in attacksPreviews[entity])
+                    foreach (var point in previews)
+                        yield return point;
         }
     }
 }

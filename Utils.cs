@@ -12,14 +12,36 @@ namespace Game
 
         public static int GetRandomInt(int min = 0, int max = 100) => random.Next(min, max);
 
+        public static Bitmap SetOpacity(this Bitmap image, int opacity, bool changeTransparent = false)
+        {
+            var im = new Bitmap(image);
+            for (var x = 0; x < image.Width; x++)
+            {
+                for (var y = 0; y < image.Height; y++)
+                {
+                    var originalColor = im.GetPixel(x, y);
+                    if (!changeTransparent && originalColor.A == 0)
+                        continue;
+                    im.SetPixel(x, y, Color.FromArgb(opacity, originalColor));
+                }
+            }
+            return im;
+        }
+
+        public static Direction Copy(this Direction en) => (Direction)(int)en;
+
         public static Direction GetDirectionFromOffset(this Point offset) => GetDirectionFromOffset(offset.X, offset.Y);
         public static Direction KeyCodeToDirection(this Keys keyCode)
             => keyCode switch
             {
                 Keys.W => Direction.Up,
+                Keys.Up => Direction.Up,
                 Keys.D => Direction.Right,
+                Keys.Right => Direction.Right,
                 Keys.A => Direction.Left,
+                Keys.Left => Direction.Left,
                 Keys.S => Direction.Down,
+                Keys.Down => Direction.Down,
                 _ => Direction.None
             };
 
@@ -84,7 +106,7 @@ namespace Game
             {
                 var x = (double)size.Width;
                 var y = (double)size.Height;
-                yield return Size.Round(new SizeF((float)(x * cosine - y * sine), (float)(x * sine + y * cosine)));
+                yield return new Size((int)Math.Round(x * cosine - y * sine,MidpointRounding.AwayFromZero), (int)Math.Round(x * sine + y * cosine, MidpointRounding.AwayFromZero));
             }
         }
 

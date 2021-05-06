@@ -1,7 +1,10 @@
-﻿namespace Game
+﻿using System.Drawing;
+
+namespace Game
 {
     public interface IDrawable
     {
-        public BasicDrawer GetDrawer();
+        public BasicDrawer Drawer { get; }
+        public Bitmap Sprite { get; }
     }
 }

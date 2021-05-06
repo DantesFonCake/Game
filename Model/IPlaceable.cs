@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace Game
+namespace Game.Model
 {
     public interface IPlaceable
     {

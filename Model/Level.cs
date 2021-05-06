@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
-namespace Game
+namespace Game.Model
 {
     public class Level : IEnumerable<Tile>
     {
@@ -22,13 +23,14 @@ namespace Game
         }
         public bool InBounds(Point point) => bounds.Contains(point);
         public bool InBounds(int x, int y) => bounds.Contains(x, y);
-
         private Rectangle bounds;
+        public GameModel Game { get; protected set; }
 
-        public Level(int xSize, int ySize)
+        public Level(GameModel game,int xSize, int ySize)
         {
             XSize = xSize;
             YSize = ySize;
+            Game = game;
             bounds = new Rectangle(0, 0, XSize, YSize);
             Map = new Tile[xSize * ySize];
             for (var y = 0; y < ySize; y++)
@@ -48,7 +50,7 @@ namespace Game
 
         public bool CanMove(Point position, Direction direction) => CanMove(position + Utils.GetOffsetFromDirection(direction));
 
-        public bool CanMove(Point position) => InBounds(position) && this[position].GameObjects.TrueForAll(x => !x.IsRigid);
+        public bool CanMove(Point position) => InBounds(position) && this[position].IsPassable;
 
         private void Entity_Attacked(object sender, AttackEventArgs e)
         {
@@ -76,11 +78,25 @@ namespace Game
             var entity = (Entity)sender;
             if (CanMove(entity.Position + new Size(e.DX, e.DY)))
             {
-                lock (this[entity.Position])
+                lock (this[entity.Position].GameObjects)
                     this[entity.Position].GameObjects.Remove(entity);
                 entity.Position = new Point(entity.X + e.DX, entity.Y + e.DY);
-                lock (this[entity.Position])
+                lock (this[entity.Position].GameObjects)
                     this[entity.Position].GameObjects.Add(entity);
+                var newVisionField = Game.Snake.RecalculateVisionField(this);
+                RecalculateVisionField(newVisionField);
+            }
+        }
+
+        public void RecalculateVisionField(HashSet<Point> newVisionField)
+        {
+            foreach (var position in newVisionField)
+            {
+                this[position].IsUnknown = false;
+            }
+            foreach (var tile in Map)
+            {
+                tile.IsVisible = newVisionField.Contains(tile.Position);
             }
         }
 

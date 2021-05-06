@@ -1,0 +1,32 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Text;
+
+namespace Game.Model
+{
+    public class Hana : PlayerControlledEntity
+    {
+        public override BasicDrawer Drawer { get ; protected set; }
+
+        public override Bitmap Sprite => Properties.Resources.Hana_Front_FaceOnly;
+
+        public Hana(Point position) : base(position, 80, null)
+        {
+            Name = "Hana";
+            Drawer = new BasicDrawer(
+                Sprite,
+                CollectImage,
+                Color.BlueViolet
+            );
+            var pattern = new[] {new Size(1,-1),new Size(1,0),new Size(1,1),
+                new Size(2,-2),new Size(2,-1),new Size(2,0),new Size(2,1),new Size(2,2)};
+            QAttack = new Attack(pattern, AttackType.Fire, 10,1, false);
+            pattern = new[] {new Size(-1,0),
+                new Size(0,-1),new Size(0,0),new Size(0,1),
+                new Size(1,0)
+            };
+            EAttack = new Attack(pattern, AttackType.Ice, 20, 5, true);
+        }
+    }
+}

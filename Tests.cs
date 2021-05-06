@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using Game.Model;
+using NUnit.Framework;
 using System;
 using System.Drawing;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Game
         [Test]
         public void Test_HaveLevel()
         {
-            var game = new GameModel(10, 10, false,false);
+            var game = new GameModel(10, 10, false, false);
             Assert.IsTrue(HaveLevel(game));
         }
 
@@ -21,7 +22,7 @@ namespace Game
         [Test]
         public void Test_LevelsHaveNormalSizes([Random(1, 100, 10)] int x, [Random(1, 100, 10)] int y)
         {
-            var game = new GameModel(x, y, false,false);
+            var game = new GameModel(x, y, false, false);
             game.MoveToNextLevel(x, y);
             Assert.IsTrue(HaveLevel(game));
             Assert.IsTrue(game.CurrentLevel.XSize == x && game.CurrentLevel.YSize == y);
@@ -38,7 +39,7 @@ namespace Game
         public void Test_EntityExist(int x, int y, int sizeX, int sizeY)
         {
             var entity = new Kaba(x, y);
-            var game = new GameModel(sizeX, sizeY, false,false, entity);
+            var game = new GameModel(sizeX, sizeY, false, false, entity);
             game.CurrentLevel.PlaceObject(entity);
             Assert.IsTrue(game.CurrentLevel[x, y].GameObjects.First() is Entity entity1 && entity1 == entity);
         }
@@ -51,7 +52,7 @@ namespace Game
         public void Test_EntityCanMove(Direction direction)
         {
             var entity = new Kaba(5, 5);
-            var game = new GameModel(10, 10, false,false, entity);
+            var game = new GameModel(10, 10, false, false, entity);
             var initialPosition = entity.Position;
             entity.Move(direction);
             var offset = Utils.GetOffsetFromDirection(direction);
@@ -62,7 +63,7 @@ namespace Game
         public void Test_EntityCantMoveOutOfBounds()
         {
             var entity = new Kaba(9, 9);
-            var game = new GameModel(10, 10, false, false,entity);
+            var game = new GameModel(10, 10, false, false, entity);
             entity.Move(Direction.Right);
             Assert.IsTrue(CheckForEntity(new Point(9, 9), entity, game));
         }
@@ -74,7 +75,7 @@ namespace Game
         {
             var entity = new Kaba(5, 5);
             var stone = new Stone(5, 4);
-            var game = new GameModel(10, 10, false, false,entity, stone);
+            var game = new GameModel(10, 10, false, false, entity, stone);
             entity.Move(Direction.Up);
             Assert.IsTrue(CheckForEntity(new Point(5, 5), entity, game));
         }
@@ -86,7 +87,7 @@ namespace Game
         public void Test_AttackDealsDamage()
         {
             var entities = new[] { new Kaba(5, 5), new Kaba(5, 6) };
-            var game = new GameModel(10, 10, false,false, entities);
+            var game = new GameModel(10, 10, false, false, entities);
             entities[0].AttackPosition(entities[0].Position);
             Assert.IsTrue(entities[1].Health != 100);
         }
@@ -94,7 +95,15 @@ namespace Game
         [Test]
         public void Test_EntityDies()
         {
-
+            var entity1 = new Kaba(5, 5);
+            var entity2 = new Kaba(5, 6);
+            var initialHealth = entity2.Health;
+            var game = new GameModel(10, 10, false, false, entity1, entity2);
+            for (var i = 0; i < initialHealth / entity1.Attack.Damage; i++)
+            {
+                entity1.AttackPosition(entity1.Position);
+            }
+            Assert.IsFalse(entity2.IsAlive);
         }
     }
 
@@ -118,12 +127,12 @@ namespace Game
         public void Test_CantScheduleToUnrecheableTile()
         {
             var stone = new Stone(5, 4);
-            var game = new GameModel(10, 10, false,true, stone);
+            var game = new GameModel(10, 10, false, true, stone);
             game.TrySheduleMove(Direction.Up);
             Assert.IsFalse(game.Step.CommitStep());
-            game = new GameModel(10, 10, false,true);
-            while (game.Snake.Position.Y > 0)
-                game.Snake.Move(Direction.Up);
+            game = new GameModel(10, 10, false, true);
+            //while (game.Snake.Position.Y > 0)
+                //game.Snake.Move(Direction.Up);
             game.TrySheduleMove(Direction.Up);
             Assert.IsFalse(game.Step.CommitStep());
         }

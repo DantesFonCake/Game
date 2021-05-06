@@ -1,28 +1,30 @@
 ﻿using System.Drawing;
 
-namespace Game
+namespace Game.Model
 {
-    public class Kaba : Entity
+    public class Kaba : PlayerControlledEntity
     {
-        private static readonly Bitmap Sprite = Properties.Resources.skull;
-        public Kaba(Point position) : base(position)
+        public Kaba(Point position) : base(position, 150 , null)
         {
             Drawer = new BasicDrawer(
                 Sprite,
                 CollectImage,
                 Color.Red
             );
+            Name = "Kaba";
             var pattern = new[] { new Size(1, -1), new Size(1, 0), new Size(1, 1) };
-            Attack = new Attack(pattern, AttackType.Physical, 10, 2,false);
-            Health = 150;
-            IsPlayerControlled = true;
+            EAttack = new Attack(pattern, AttackType.Physical, 20, 2, false);
+            pattern = new[] { new Size(1, 0), new Size(2, 0) };
+            QAttack = new Attack(pattern, AttackType.Physical, 28, 2, false);
         }
         public Kaba(int x, int y) : this(new Point(x, y))
         {
 
         }
 
-        public override BasicDrawer GetDrawer() => Drawer;
+        public override BasicDrawer Drawer { get; protected set; }
+
+        public override Bitmap Sprite => Properties.Resources.Kaba_Front_FaceOnly;
 
     }
 }

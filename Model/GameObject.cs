@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace Game
+namespace Game.Model
 {
     public abstract class GameObject : IDrawable, IPlaceable
     {
@@ -46,7 +46,8 @@ namespace Game
 
         public GameObject(Point position) => Position = position;
 
-        public abstract BasicDrawer GetDrawer();
+        public abstract BasicDrawer Drawer { get; protected set; }
+        public abstract Bitmap Sprite { get; }
         public void PlaceItself(Level level) => level.PlaceObject(this);
     }
 }

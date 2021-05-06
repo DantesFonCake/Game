@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Game.Model;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -7,30 +8,27 @@ using System.Windows.Forms;
 
 namespace Game
 {
-    public class ScaledViewPanel : Panel
+    public class ScaledViewPanel
     {
         private readonly GameModel GameModel;
         private readonly Controller Controller;
-
-        public ScaledViewPanel(GameModel gameModel, Controller controller)
+        private readonly GameWindow Parent;
+        public ScaledViewPanel(GameWindow parent, GameModel gameModel, Controller controller)
         {
             GameModel = gameModel;
             Controller = controller;
+            Parent = parent;
             FitToWindow = true;
-            zoomScale = 1f;
+            Parent.ClickPerformed += (_, e) => OnMouseClick(e);
+            Parent.MouseMove += (_, e) => OnMouseMove(e);
+            //Parent.MouseWheel += (_, e) => OnMouseWheel(e);
         }
 
         private PointF centerLogicalPos;
         private Point mouseLogicalPos;
-        private float zoomScale;
         private readonly int tileSize = 64;
         private readonly int whiteSpace = 10;
-        private readonly float tileBorderWidth = 0.5f;
-
-        public ScaledViewPanel()
-        {
-
-        }
+        private readonly int tileBorderWidth = 1;
 
         public Point MouseLogicalPos => mouseLogicalPos;
 
@@ -44,107 +42,83 @@ namespace Game
             }
         }
 
-        public float ZoomScale
-        {
-            get => zoomScale;
-            set
-            {
-                zoomScale = Math.Min(1000f, Math.Max(0.001f, value));
-                FitToWindow = false;
-            }
-        }
 
         public bool FitToWindow { get; set; }
 
-        protected override void InitLayout()
+        protected void OnMouseClick(CustomMouseEventArg e)
         {
-            base.InitLayout();
-            ResizeRedraw = true;
-            DoubleBuffered = true;
-        }
-
-        protected override void OnMouseClick(MouseEventArgs e)
-        {
-            base.OnMouseClick(e);
 
             if (e.Button == MouseButtons.Middle)
                 FitToWindow = true;
-            Controller.HandleMouseClick(e.Button, MouseLogicalPos);
+            if (!e.Handled)
+                Controller.HandleMouseClick(e.Button, MouseLogicalPos);
         }
 
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
-            mouseLogicalPos = WindowCoordinatesToTile(ToLogical(e.Location));
-        }
+        protected void OnMouseMove(MouseEventArgs e) => mouseLogicalPos = WindowCoordinatesToTile(ToLogical(e.Location));
 
-
-        protected override void OnMouseWheel(MouseEventArgs e)
-        {
-            base.OnMouseWheel(e);
-            const float zoomChangeStep = 1.1f;
-            if (e.Delta > 0)
-                ZoomScale = ZoomScale <= 1.5 ? ZoomScale * zoomChangeStep : ZoomScale;
-            if (e.Delta < 0)
-                ZoomScale = ZoomScale >= 0.7 ? ZoomScale / zoomChangeStep : ZoomScale;
-            Invalidate();
-        }
 
         private PointF ToLogical(Point p)
         {
             var shift = GetShift();
             return new PointF(
-                (p.X - shift.X) / zoomScale,
-                (p.Y - shift.Y) / zoomScale);
+                (p.X - shift.X),
+                (p.Y - shift.Y));
         }
 
         private PointF GetShift() => new PointF(
-                ClientSize.Width / 2f - CenterLogicalPos.X * ZoomScale,
-                ClientSize.Height / 2f - CenterLogicalPos.Y * ZoomScale);
+                Parent.ClientSize.Width / 2f - CenterLogicalPos.X ,
+                Parent.ClientSize.Height / 2f - CenterLogicalPos.Y );
 
-        protected override void OnPaint(PaintEventArgs e)
+        public Bitmap GetBitmap()
         {
-            base.OnPaint(e);
-            var g = e.Graphics;
-            g.Clear(Color.Black);
-            var sceneSize = new SizeF(800, 800);
-            if (FitToWindow)
+            var i = new Bitmap(Parent.ClientSize.Width, Parent.ClientSize.Height);
+            using (var g = Graphics.FromImage(i))
             {
-                var vMargin = sceneSize.Height * ClientSize.Width < ClientSize.Height * sceneSize.Width;
-                zoomScale = vMargin
-                    ? ClientSize.Width / sceneSize.Width
-                    : ClientSize.Height / sceneSize.Height;
-                centerLogicalPos = new PointF(sceneSize.Width / 2, sceneSize.Height / 2);
-            }
-            CenterLogicalPos = TileCoordinatesToWindow(GameModel.Snake.Position);
-            var shift = GetShift();
-            g.ResetTransform();
-            g.TranslateTransform(shift.X, shift.Y);
-            g.ScaleTransform(ZoomScale, ZoomScale);
+                g.Clear(Color.LightGray);
+                var sceneSize = Parent.ClientSize;
+                if (FitToWindow)
+                {
+                    var vMargin = sceneSize.Height * Parent.ClientSize.Width < Parent.ClientSize.Height * sceneSize.Width;
+                    
+                    centerLogicalPos = new PointF(sceneSize.Width / 2, sceneSize.Height / 2);
+                }
+                CenterLogicalPos = TileCoordinatesToWindow(GameModel.Snake.Position);
+                var shift = GetShift();
+                g.ResetTransform();
+                g.TranslateTransform(shift.X, shift.Y);
+                //g.ScaleTransform(ZoomScale, ZoomScale);
 
-            foreach (var tile in GameModel.CurrentLevel)
-            {
-                DrawWithBorder(g, tile);
+                var previewRectangle = new RectangleF(Parent.ClientRectangle.Location,Parent.ClientRectangle.Size);
+                previewRectangle.Inflate(new Size(tileSize * 2, tileSize * 2));
+                foreach (var tile in GameModel.CurrentLevel.Where(x => PointInClipRegion(previewRectangle, x.Position, shift)))
+                {
+                    DrawWithBorder(g, tile);
+                }
+                if (GameModel.ReadyToAttack)
+                {
+                    var attack = GameModel.SelectedEntity.Attack;
+                    var specificColor = GameModel.SelectedEntity.Drawer.SpecificColor;
+                    if (GameModel.IsAccessible && GameModel.SelectedPosition != null)
+                        FillRectangles(g, attack.PossibleArea.Select(x => GameModel.SelectedPosition.Value + x).Where(x => PointInClipRegion(previewRectangle, x, shift)), Color.FromArgb(64, specificColor));
+                    if (GameModel.SelectedEntity.Attack.PossibleArea
+                    .Select(x => GameModel.SelectedPosition + x)
+                    .Contains(MouseLogicalPos))
+                        DrawRectangles(g, attack.GetPositions(mouseLogicalPos, GameModel.SelectedEntity.Direction).Where(x => PointInClipRegion(previewRectangle, x, shift)), specificColor, 5);
+                }
+                DrawPath(g, Color.Black, GameModel.Step.GetPathPreview(GameModel.Snake.Kaba).Where(x => PointInClipRegion(previewRectangle, x, shift)));
+                foreach (var hero in GameModel.Snake.Heroes)
+                {
+                    DrawRectangles(g, GameModel.Step.GetAttackPreview(hero).Where(x => PointInClipRegion(previewRectangle, x, shift)), Color.FromArgb(128, hero.Drawer.SpecificColor), 4);
+                }
+                foreach (var ghost in GameModel.Step.Ghosts.Where(x => x.Key.Position != x.Value.Position).Where(x => PointInClipRegion(previewRectangle, x.Value.Position, shift)))
+                {
+                    g.DrawImage(ghost.Value.Sprite, new RectangleF(TileCoordinatesToWindow(ghost.Value.Position), new Size(tileSize, tileSize)));
+                }
             }
-
-            if (GameModel.ReadyToAttack)
-            {
-                var attack = GameModel.SelectedEntity.Attack;
-                var specificColor = GameModel.SelectedEntity.GetDrawer().SpecificColor;
-                if(GameModel.IsAccessible)
-                    FillRectangles(g, attack.PossibleArea.Select(x => GameModel.SelectedEntity.Position + x), Color.FromArgb(64, specificColor));
-                if (GameModel.SelectedEntity.Attack.PossibleArea
-                .Select(x => GameModel.SelectedEntity.Position + x)
-                .Contains(MouseLogicalPos))
-                    DrawRectangles(g, attack.GetPositions(mouseLogicalPos, GameModel.SelectedEntity.Direction), specificColor, 5);
-            }
-            DrawPath(g, Color.Black, GameModel.Step.GetPathPreview(GameModel.Snake));
-            foreach (var hero in GameModel.Snake.Heroes)
-            {
-                DrawRectangles(g, GameModel.Step.GetAttackPreview(hero), Color.FromArgb(128, hero.GetDrawer().SpecificColor), 4);
-            }
-
+            return i;
         }
+
+        private bool PointInClipRegion(RectangleF clipRectangle, Point x, PointF shift) => clipRectangle.Contains(TileCoordinatesToWindow(x) + new SizeF(shift));
 
         private void DrawRectangles(Graphics g, IEnumerable<Point> points, Color color, int borderWidth)
         {
@@ -166,23 +140,27 @@ namespace Game
 
         private PointF TileCoordinatesToWindow(Point coords)
         {
-            var newX = whiteSpace + tileBorderWidth + coords.X * (tileSize + tileBorderWidth);
-            var newY = whiteSpace + tileBorderWidth + coords.Y * (tileSize + tileBorderWidth);
+            var newX = whiteSpace - 2*tileBorderWidth + coords.X * (tileSize + tileBorderWidth);
+            var newY = whiteSpace - 2*tileBorderWidth + coords.Y * (tileSize + tileBorderWidth);
             return new PointF(newX, newY);
         }
 
         private Point WindowCoordinatesToTile(PointF coords)
         {
-            var newX = (coords.X - whiteSpace - tileBorderWidth) / (tileSize + tileBorderWidth);
-            var newY = (coords.Y - whiteSpace - tileBorderWidth) / (tileSize + tileBorderWidth);
-            return new Point((int)newX, (int)newY);
+            var newX = (coords.X - whiteSpace + 2*tileBorderWidth - tileSize / 2) / (tileSize + tileBorderWidth);
+            var newY = (coords.Y - whiteSpace + 2*tileBorderWidth - tileSize / 2) / (tileSize + tileBorderWidth);
+            return Point.Round(new PointF(newX, newY));
         }
 
         private void DrawWithBorder(Graphics g, Tile tile)
         {
-            var coords = TileCoordinatesToWindow(tile.Position);
-            g.DrawRectangle(Pens.Black, coords.X - tileBorderWidth, coords.Y - tileBorderWidth, tileSize + tileBorderWidth, tileSize + tileBorderWidth);
-            g.DrawImage(tile.GetDrawer().GetView(), coords.X, coords.Y, tileSize, tileSize);
+            var coords = Point.Truncate(TileCoordinatesToWindow(tile.Position));
+            var borderOffset = new Size(tileBorderWidth, tileBorderWidth);
+            var tileRectangle = new Rectangle(coords, new Size(tileSize, tileSize));
+            var fullRectangle = new Rectangle(coords - borderOffset, tileRectangle.Size + 2 * borderOffset);
+            g.DrawRectangle(new Pen(Color.Black,tileBorderWidth), fullRectangle);
+
+            g.DrawImage(tile.Drawer.GetView(), tileRectangle);
         }
 
         private void DrawPath(Graphics graphics, Color color, IEnumerable<Point> path)
@@ -195,5 +173,7 @@ namespace Game
             for (var i = 0; i < points.Length - 1; i++)
                 graphics.DrawLine(pen, points[i], points[i + 1]);
         }
+
+
     }
 }
