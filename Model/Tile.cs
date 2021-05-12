@@ -25,6 +25,7 @@ namespace Game.Model
         public bool IsVisible { get; set; } = false;
         public bool IsUnknown { get; set; } = true;
         public bool IsPassable => GameObjects.TrueForAll(x => !x.IsRigid);
+        public bool IsSeeThrough => GameObjects.TrueForAll(x => x.IsSeeThrough);
         public Level Level;
         private static Bitmap unknownTile;
         public List<GameObject> GameObjects { get; private set; } = new List<GameObject>(3);

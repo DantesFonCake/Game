@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 
 namespace Game.Model
 {
@@ -26,11 +28,11 @@ namespace Game.Model
         private Rectangle bounds;
         public GameModel Game { get; protected set; }
 
-        public Level(GameModel game,int xSize, int ySize)
+        public Level(GameModel game, int xSize, int ySize)
         {
+            Game = game;
             XSize = xSize;
             YSize = ySize;
-            Game = game;
             bounds = new Rectangle(0, 0, XSize, YSize);
             Map = new Tile[xSize * ySize];
             for (var y = 0; y < ySize; y++)
@@ -54,7 +56,7 @@ namespace Game.Model
 
         private void Entity_Attacked(object sender, AttackEventArgs e)
         {
-            var attack = ((Entity)sender).Attack;
+            var attack = e.Attack;
             foreach (var point in e)
             {
                 if (InBounds(point))
@@ -83,8 +85,36 @@ namespace Game.Model
                 entity.Position = new Point(entity.X + e.DX, entity.Y + e.DY);
                 lock (this[entity.Position].GameObjects)
                     this[entity.Position].GameObjects.Add(entity);
+                if (Game == null || Game.Snake == null)
+                    return;
                 var newVisionField = Game.Snake.RecalculateVisionField(this);
                 RecalculateVisionField(newVisionField);
+            }
+        }
+
+        public IEnumerable<Point> GetAccesibleTiles(Point start, int radius, bool includeBorders, Func<Tile, bool> borderSelector)
+        {
+            yield return start;
+            var ch = new HashSet<Point>();
+            var angles = Enumerable.Range(0, (radius + 2) * 8).Select(x => x * Math.PI / (radius + 2) / 4);
+            foreach (var angle in angles)
+            {
+                var sine = Math.Sin(angle);
+                var cosine = Math.Cos(angle);
+                var size = (X: cosine, Y: sine);
+                for (double i = 1; i <= radius; i += 0.5)
+                {
+                    var position = start + new Size((int)Math.Truncate(size.X * i), (int)Math.Truncate(size.Y * i));
+                    if (!InBounds(position) || ch.Contains(position))
+                        continue;
+                    if (borderSelector(this[position]))
+                    {
+                        if (includeBorders)
+                            yield return position;
+                        break;
+                    }
+                    yield return position;
+                }
             }
         }
 
@@ -102,5 +132,25 @@ namespace Game.Model
 
         public IEnumerator<Tile> GetEnumerator() => ((IEnumerable<Tile>)Map).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => Map.GetEnumerator();
+
+        public string[] Serialize()
+        {
+            var res = new string[YSize];
+            for (var y = 0; y < YSize; y++)
+            {
+                var builder = new StringBuilder();
+                for (var x = 0; x < XSize; x++)
+                {
+                    foreach (var obj in this[x, y].GameObjects)
+                    {
+                        builder.Append(obj.GetObjectType().UToString());
+                        builder.Append(' ');
+                    }
+                    builder.Append(';');
+                }
+                res[y] = builder.ToString();
+            }
+            return res;
+        }
     }
 }

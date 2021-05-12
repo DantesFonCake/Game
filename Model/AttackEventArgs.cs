@@ -8,9 +8,15 @@ namespace Game
     public class AttackEventArgs : IEnumerable<Point>
     {
         public readonly Point[] Points;
+        public readonly Attack Attack;
 
-        public AttackEventArgs(Point[] points) => Points = points;
-        public AttackEventArgs(IEnumerable<Point> points) : this(points.ToArray()) { }
+        public AttackEventArgs(Point[] points, Attack attack)
+        {
+            Points = points;
+            Attack = attack;
+        }
+
+        public AttackEventArgs(IEnumerable<Point> points, Attack attack) : this(points.ToArray(), attack) { }
 
         public IEnumerator<Point> GetEnumerator() => ((IEnumerable<Point>)Points).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => Points.GetEnumerator();

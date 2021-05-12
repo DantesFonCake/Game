@@ -7,7 +7,6 @@ namespace Game.Model
     {
         public Attack EAttack { get; protected set; }
         public Attack QAttack { get; protected set; }
-        public override Attack Attack { get; protected set; }
         public Ghost Ghost { get; private set; }
         public void SelectAttack(KeyedAttack attack) => Attack = attack switch
         {
@@ -15,8 +14,8 @@ namespace Game.Model
             KeyedAttack.QAttack => QAttack,
         };
 
-        public PlayerControlledEntity(Point position, int health, Dictionary<AttackType, int> resistances)
-            : base(position, health, resistances)
+        public PlayerControlledEntity(GameModel game,Point position, int health, Dictionary<AttackType, int> resistances)
+            : base(game, position, health, resistances)
         {
             IsPlayerControlled = true;
             Attack = QAttack;

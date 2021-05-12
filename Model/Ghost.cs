@@ -26,6 +26,7 @@ namespace Game.Model
         {
             Position += direction.GetOffsetFromDirection();
         }
+
         public void Rebound(PlayerControlledEntity entity) 
         {
             Entity = entity;

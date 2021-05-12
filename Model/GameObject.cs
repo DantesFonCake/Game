@@ -4,8 +4,11 @@ namespace Game.Model
 {
     public abstract class GameObject : IDrawable, IPlaceable
     {
+        public GameModel Game;
+
         private bool isCollectable = false;
         private bool isRigid = true;
+        public bool IsSeeThrough { get; protected set; } = true;
         public Direction Direction { get; protected set; } = Direction.Down;
         public Point Position { get; set; }
         public int X
@@ -40,11 +43,15 @@ namespace Game.Model
             }
         }
 
-        public GameObject(int x, int y) : this(new Point(x, y))
+        public GameObject(GameModel game, int x, int y) : this(game, new Point(x, y))
         {
         }
 
-        public GameObject(Point position) => Position = position;
+        public GameObject(GameModel game, Point position)
+        {
+            Position = position;
+            Game = game;
+        }
 
         public abstract BasicDrawer Drawer { get; protected set; }
         public abstract Bitmap Sprite { get; }

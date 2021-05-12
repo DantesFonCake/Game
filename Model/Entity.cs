@@ -7,19 +7,19 @@ namespace Game.Model
 {
     public abstract class Entity : GameObject, IMoveable, IAttacker
     {
-        
+
         public bool IsPlayerControlled { get; protected set; }
         public string Name { get; protected set; }
 
-        public Entity(int x, int y, int health = 100, Dictionary<AttackType, int> resistances = null) : this(new Point(x, y), health, resistances)
+        public Entity(GameModel game, int x, int y, int health = 100, Dictionary<AttackType, int> resistances = null) : this(game, new Point(x, y), health, resistances)
         {
         }
 
-        public Entity(Point position, int health = 100, Dictionary<AttackType, int> resistances = null) : base(position)
+        public Entity(GameModel game, Point position, int health = 100, Dictionary<AttackType, int> resistances = null) : base(game, position)
         {
             this.resistances = resistances ?? new Dictionary<AttackType, int>();
             Health = health;
-            initialHealth = health;           
+            initialHealth = health;
         }
 
         #region Movement and Rotation
@@ -47,10 +47,10 @@ namespace Game.Model
         #endregion
 
         #region Health and Resistances
-        private readonly int initialHealth;
+        protected readonly int initialHealth;
         public double Health { get; protected set; }
         public bool IsAlive => (int)Health > 0;
-        private readonly Dictionary<AttackType, int> resistances;
+        protected readonly Dictionary<AttackType, int> resistances;
         public IReadOnlyDictionary<AttackType, int> Resistances { get; }
         public virtual void DealDamage(int damage, AttackType attackType)
         {
@@ -62,13 +62,13 @@ namespace Game.Model
 
         #region Attack
         public event EventHandler<AttackEventArgs> Attacked;
-        public virtual Attack Attack { get; protected set; }
+        public Attack Attack{ get; protected set;}
         public virtual void AttackPosition(Point position, Direction attackDirection = Direction.None)
         {
             if (Attack != null)
             {
                 var positionsToAttack = Attack.GetPositions(position, attackDirection == Direction.None ? Direction : attackDirection);
-                Attacked?.Invoke(this, new AttackEventArgs(positionsToAttack));
+                Attacked?.Invoke(this, new AttackEventArgs(positionsToAttack, Attack));
             }
         }
         #endregion
@@ -91,29 +91,11 @@ namespace Game.Model
             return image;
         }
 
-        protected int rangeOfVision = 8;
-        public IEnumerable<Point> RecalculateVisionField(Level level)
-        {
-            yield return Position;
-            var viewVector = Enumerable.Range(1, rangeOfVision).Select(x => new Size(x, 0));
-            foreach (var vector in Enumerable
-                .Range(0, rangeOfVision * 8 + 1)
-                .Select(
-                x=> viewVector.RotateSizes(x * 2 * Math.PI / (rangeOfVision * 8))))
-            {
-                foreach (var position in vector.Select(x=>Position+x))
-                {
-                    if (!level.InBounds(position))
-                        break;
-                    if (!level[position].IsPassable)
-                    {
-                        yield return position;
-                        break;
-                    }
-                    yield return position;
-                }
+        
+        public IEnumerable<Point> GetPossibleAttackPositions(Level level, Point position)
+            => Attack != null ? level.GetAccesibleTiles(position, Attack.Range, false, x => !x.IsSeeThrough) : Enumerable.Empty<Point>();
 
-            }
-        }
+        protected int rangeOfVision = 8;
+        public IEnumerable<Point> RecalculateVisionField(Level level) => level.GetAccesibleTiles(Position, rangeOfVision, true, x => !x.IsSeeThrough);
     }
 }

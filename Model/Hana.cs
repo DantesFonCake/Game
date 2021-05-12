@@ -11,7 +11,7 @@ namespace Game.Model
 
         public override Bitmap Sprite => Properties.Resources.Hana_Front_FaceOnly;
 
-        public Hana(Point position) : base(position, 80, null)
+        public Hana(GameModel game,Point position) : base(game, position, 80, null)
         {
             Name = "Hana";
             Drawer = new BasicDrawer(
@@ -27,6 +27,11 @@ namespace Game.Model
                 new Size(1,0)
             };
             EAttack = new Attack(pattern, AttackType.Ice, 20, 5, true);
+        }
+
+        public Hana(GameModel game, int x,int y):this(game, new Point(x, y))
+        {
+
         }
     }
 }

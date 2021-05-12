@@ -3,15 +3,48 @@ using NUnit.Framework;
 using System;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 
 namespace Game
 {
+    class TestEntity : Entity
+    {
+        public override BasicDrawer Drawer { get; protected set; } = null;
+        public override Bitmap Sprite => null;
+        public Scheduler Scheduler;
+
+        public TestEntity(int x, int y) : base(null, x, y)
+        {
+            Scheduler = new Scheduler();
+        }
+
+        public void SetAttack(Attack attack) => Attack = attack;
+        public void SetResistance(AttackType type, int resistance) => resistances[type] = resistance;
+    }
+
+    class TestObject : GameObject
+    {
+        public override BasicDrawer Drawer { get; protected set; } = null;
+        public override Bitmap Sprite => null;
+
+        public TestObject(int x, int y) : base(null, x, y)
+        {
+            IsRigid = true;
+        }
+    }
+
     public class LevelCreationTests
     {
+        private static readonly string[] TestLevel1 = new[]
+        {
+            " ; ; ",
+            " ; ; ",
+            " ; ; "
+        };
         [Test]
         public void Test_HaveLevel()
         {
-            var game = new GameModel(10, 10, false, false);
+            var game = new GameModel(TestLevel1);
             Assert.IsTrue(HaveLevel(game));
         }
 
@@ -20,17 +53,62 @@ namespace Game
 
 
         [Test]
-        public void Test_LevelsHaveNormalSizes([Random(1, 100, 10)] int x, [Random(1, 100, 10)] int y)
+        public void Test_LevelsHaveNormalSizes([Random(1, 20, 5)] int x, [Random(1, 20, 5)] int y)
         {
-            var game = new GameModel(x, y, false, false);
-            game.MoveToNextLevel(x, y);
+            var line = new StringBuilder();
+            for (var i = 0; i < x; i++)
+            {
+                line.Append(" ;");
+            }
+            line.Remove(line.Length-1, 1);
+            var level = Enumerable.Range(0, y).Select(x => line.ToString()).ToArray();
+            var game = new GameModel(level);
             Assert.IsTrue(HaveLevel(game));
             Assert.IsTrue(game.CurrentLevel.XSize == x && game.CurrentLevel.YSize == y);
+            line = line.Clear();
+            for (var i = 0; i < x + 1; i++)
+            {
+                line.Append(" ;");
+            }
+            line.Remove(line.Length - 1, 1);
+            level = Enumerable.Range(0, y + 1).Select(x => line.ToString()).ToArray();
+            game.MoveToNextLevel(level);
+            Assert.IsTrue(HaveLevel(game));
+            Assert.IsTrue(game.CurrentLevel.XSize == x + 1 && game.CurrentLevel.YSize == y + 1);
+        }
+
+        [Test]
+        [TestCase(0, 0)]
+        [TestCase(0, 1)]
+        [TestCase(0, 2)]
+        [TestCase(1, 0)]
+        [TestCase(1, 1)]
+        [TestCase(1, 2)]
+        [TestCase(2, 0)]
+        [TestCase(2, 1)]
+        [TestCase(2, 2)]
+        public void Test_LevelCorrectObjectPlacement(int x, int y)
+        {
+            var level = (string[])TestLevel1.Clone();
+            var line = new StringBuilder();
+            for (var i = 0; i < level[0].Split(';').Length; i++)
+            {
+                if (i == x)
+                    line.Append("S;");
+                else
+                    line.Append(" ;");
+            }
+            line.Remove(line.Length - 1, 1);
+            level[y] = line.ToString();
+            var (l, _) = LevelCreator.FromLines(null, level);
+            Assert.IsTrue(l.InBounds(x, y) && l[x, y].GameObjects.Count > 0);
         }
     }
 
     public class EntityBasicTests
     {
+
+        
         [Test]
         [TestCase(1, 2, 10, 10)]
         [TestCase(1, 2, 5, 3)]
@@ -38,10 +116,10 @@ namespace Game
         [TestCase(1, 2, 3, 10)]
         public void Test_EntityExist(int x, int y, int sizeX, int sizeY)
         {
-            var entity = new Kaba(x, y);
-            var game = new GameModel(sizeX, sizeY, false, false, entity);
-            game.CurrentLevel.PlaceObject(entity);
-            Assert.IsTrue(game.CurrentLevel[x, y].GameObjects.First() is Entity entity1 && entity1 == entity);
+            var level = LevelCreator.OfSize(null, new Size(sizeX, sizeY));
+            var entity = new TestEntity(x, y);
+            level.PlaceObject(entity);
+            Assert.IsTrue(level.InBounds(x, y) && level[x, y].GameObjects.Contains(entity));
         }
 
         [Test]
@@ -51,90 +129,168 @@ namespace Game
         [TestCase(Direction.Right)]
         public void Test_EntityCanMove(Direction direction)
         {
-            var entity = new Kaba(5, 5);
-            var game = new GameModel(10, 10, false, false, entity);
-            var initialPosition = entity.Position;
+            var level = LevelCreator.OfSize(null, new Size(10, 10));
+            var entity = new TestEntity(5, 5);
+            level.PlaceObject(entity);
+            Assert.IsTrue(level.InBounds(5, 5) && level[5, 5].GameObjects.Contains(entity));
             entity.Move(direction);
-            var offset = Utils.GetOffsetFromDirection(direction);
-            Assert.IsTrue(CheckForEntity(initialPosition + offset, entity, game));
+            var position = new Point(5, 5) + direction.GetOffsetFromDirection();
+            Assert.IsTrue(CheckForEntity(position,entity,level));
         }
 
         [Test]
-        public void Test_EntityCantMoveOutOfBounds()
+        [TestCase(Direction.Up)]
+        [TestCase(Direction.Down)]
+        [TestCase(Direction.Left)]
+        [TestCase(Direction.Right)]
+        public void Test_EntityCantMoveOutOfBounds(Direction direction)
         {
-            var entity = new Kaba(9, 9);
-            var game = new GameModel(10, 10, false, false, entity);
-            entity.Move(Direction.Right);
-            Assert.IsTrue(CheckForEntity(new Point(9, 9), entity, game));
+            var level = LevelCreator.OfSize(null, new Size(1, 1));
+            var entity = new TestEntity(0, 0);
+            level.PlaceObject(entity);
+            entity.Move(direction);
+            Assert.IsTrue(CheckForEntity(new Point(0, 0), entity, level));
+
         }
 
-        private static bool CheckForEntity(Point position, Entity entity, GameModel game) => entity.Position == position && game.CurrentLevel[position].GameObjects.First() is Entity entity1 && entity1 == entity;
+        private static bool CheckForEntity(Point position, Entity entity, Level level) => entity.Position == position && level[position].GameObjects.Contains(entity);
 
         [Test]
         public void Test_EntityCantGoOverRigidObject()
         {
-            var entity = new Kaba(5, 5);
-            var stone = new Stone(5, 4);
-            var game = new GameModel(10, 10, false, false, entity, stone);
-            entity.Move(Direction.Up);
-            Assert.IsTrue(CheckForEntity(new Point(5, 5), entity, game));
+            var level = LevelCreator.OfSize(null, new Size(1, 2));
+            var entity = new TestEntity(0, 0);
+            var obj = new TestObject(0, 1);
+            level.PlaceObject(entity);
+            level.PlaceObject(obj);
+            entity.Move(Direction.Down);
+            Assert.IsTrue(CheckForEntity(new Point(0, 0), entity, level));
         }
     }
 
     public class AttackTests
     {
+        TestEntity Entity;
+        TestEntity Entity1;
+        Level Level;
+        [SetUp]
+        public void CreateAll()
+        {
+            Level = LevelCreator.OfSize(null, new Size(2, 1));
+            Entity = new TestEntity(0, 0);
+            Entity1 = new TestEntity(1, 0);
+            Level.PlaceObject(Entity);
+            Level.PlaceObject(Entity1);
+            Entity.Rotate(Direction.Right);
+        }
+
         [Test]
         public void Test_AttackDealsDamage()
         {
-            var entities = new[] { new Kaba(5, 5), new Kaba(5, 6) };
-            var game = new GameModel(10, 10, false, false, entities);
-            entities[0].AttackPosition(entities[0].Position);
-            Assert.IsTrue(entities[1].Health != 100);
+            Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Fire, 10, 1, false));
+            var initialHealth = Entity1.Health;           
+            Entity.AttackPosition(Entity.Position);
+            Assert.IsTrue(Entity1.Health<initialHealth);
         }
 
         [Test]
         public void Test_EntityDies()
         {
-            var entity1 = new Kaba(5, 5);
-            var entity2 = new Kaba(5, 6);
-            var initialHealth = entity2.Health;
-            var game = new GameModel(10, 10, false, false, entity1, entity2);
-            for (var i = 0; i < initialHealth / entity1.Attack.Damage; i++)
-            {
-                entity1.AttackPosition(entity1.Position);
-            }
-            Assert.IsFalse(entity2.IsAlive);
+            Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Fire, (int)(Entity1.Health+1), 1, false));
+            Entity.AttackPosition(Entity.Position);
+            Assert.IsTrue(!Entity1.IsAlive);
+        }
+
+        [Test]
+        public void Test_AttackTypeResistanceReducesDamage([Random(10,100,10)] int resistance)
+        {
+            var initialDamage = 20;
+            var initialHealth = Entity1.Health;
+            Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Physical, initialDamage, 1, false));
+            Entity1.SetResistance(AttackType.Physical, resistance);
+            Entity.AttackPosition(Entity.Position);
+            var dealtDamage = initialHealth - Entity1.Health;
+            Assert.AreEqual(100 - dealtDamage / initialDamage * 100, resistance,1e-3);
         }
     }
 
     public class SteppingTests
     {
-        [TestCase(Direction.Left)]
-        [TestCase(Direction.Right)]
-        [TestCase(Direction.Up)]
-        public void Test_StepWorks(Direction direction)
+        TestEntity Entity;
+        Level Level;
+
+        [SetUp]
+        public void CreateAll()
         {
-            var game = new GameModel(10, 10);
-            var initialPosition = game.Snake.Position;
-            game.TrySheduleMove(direction);
-            game.CommitStep();
-            while (!game.IsAccessible)
-                continue;
-            Assert.IsTrue(Utils.GetDirectionFromOffset(game.Snake.Position - new Size(initialPosition)) == direction);
+            Entity = new TestEntity(0, 0);
+            Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Fire, 10, 1, false));
+            Level = LevelCreator.OfSize(null, new Size(3, 3));
+            Level.PlaceObject(Entity);
+        }
+
+        [TestCase(new[] { Direction.Right})]
+        [TestCase(new[] { Direction.Right, Direction.Down,Direction.Up,Direction.Left })]
+        [TestCase(new[] { Direction.Right, Direction.Right ,Direction.Down })]
+        public void Test_MovementSteps(Direction[] path)
+        {
+            var position = Entity.Position;
+            foreach (var dir in path)
+            {
+                Entity.Scheduler.AddMovement(x => Entity.Move(x), dir);
+                position += dir.GetOffsetFromDirection();
+            }
+            while (Entity.Scheduler.Commit()) ;
+            Assert.AreEqual(position, Entity.Position);
+        }
+
+        [TestCase(new[] { Direction.Right })]
+        [TestCase(new[] { Direction.Right, Direction.Down, Direction.Up, Direction.Left })]
+        [TestCase(new[] { Direction.Right, Direction.Right, Direction.Down })]
+        public void Test_StepsUnchedule(Direction[] path)
+        {
+            var position = Entity.Position;
+            var count = 0;
+            foreach (var dir in path)
+            {
+                Entity.Scheduler.AddMovement(x => Entity.Move(x), dir);
+                count++;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                Entity.Scheduler.Unschedule();
+            }
+            while (Entity.Scheduler.Commit()) ;
+            Assert.AreEqual(position, Entity.Position);
         }
 
         [Test]
-        public void Test_CantScheduleToUnrecheableTile()
+        public void Test_AttackSteps()
         {
-            var stone = new Stone(5, 4);
-            var game = new GameModel(10, 10, false, true, stone);
-            game.TrySheduleMove(Direction.Up);
-            Assert.IsFalse(game.Step.CommitStep());
-            game = new GameModel(10, 10, false, true);
-            //while (game.Snake.Position.Y > 0)
-                //game.Snake.Move(Direction.Up);
-            game.TrySheduleMove(Direction.Up);
-            Assert.IsFalse(game.Step.CommitStep());
+            var entity1 = new TestEntity(0, 1);
+            Level.PlaceObject(entity1);
+            var initialHealth = entity1.Health;
+            Entity.Scheduler.AddAttack(Entity, Entity.Position);
+            Entity.Scheduler.Commit();
+            Assert.IsTrue(entity1.Health<initialHealth);
+        }
+
+        [Test]
+        public void Test_MixedSteps()
+        {
+            var entity1 = new TestEntity(2, 0);
+            var initialHealth = entity1.Health;
+            Level.PlaceObject(entity1);
+            Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Right);
+            Entity.Scheduler.AddAttack(Entity, Entity.Position+Direction.Right.GetOffsetFromDirection());
+            Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Down);
+            Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Right);
+            Entity.Scheduler.Commit();
+            Assert.IsTrue(new Point(1, 0) == Entity.Position && entity1.Health == initialHealth);
+            Entity.Scheduler.Commit();
+            Assert.IsTrue(new Point(1, 0) == Entity.Position && entity1.Health < initialHealth);
+            initialHealth = entity1.Health;
+            while(Entity.Scheduler.Commit());
+            Assert.IsTrue(new Point(2, 1) == Entity.Position && entity1.Health == initialHealth);
         }
     }
 }

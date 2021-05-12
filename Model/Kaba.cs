@@ -4,7 +4,7 @@ namespace Game.Model
 {
     public class Kaba : PlayerControlledEntity
     {
-        public Kaba(Point position) : base(position, 150 , null)
+        public Kaba(GameModel game, Point position) : base(game, position, 150 , null)
         {
             Drawer = new BasicDrawer(
                 Sprite,
@@ -17,7 +17,7 @@ namespace Game.Model
             pattern = new[] { new Size(1, 0), new Size(2, 0) };
             QAttack = new Attack(pattern, AttackType.Physical, 28, 2, false);
         }
-        public Kaba(int x, int y) : this(new Point(x, y))
+        public Kaba(GameModel game, int x, int y) : this(game, new Point(x, y))
         {
 
         }

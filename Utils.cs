@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Game.Model;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -51,6 +52,10 @@ namespace Game
             return offsets.Select(x => point + x);
         }
 
+        public static double GetDistance(this Point point, Point point2) => 
+            Math.Sqrt((point.X - point2.X) * (point.X - point2.X) +
+                (point.Y - point2.Y) * (point.Y - point2.Y));
+
         public static IEnumerable<Size> GetRadius(int radius)
         {
             var sizes = Enumerable.Range(0, radius).Select(x => new Size(x, 0));
@@ -94,7 +99,7 @@ namespace Game
             {
                 var x = (double)point.X - origin.X;
                 var y = (double)point.Y - origin.Y;
-                yield return Point.Round(new PointF((float)(x * cosine - y * sine + origin.X), (float)(x * sine + y * cosine + origin.Y)));
+                yield return new Point((int)Math.Round(x * cosine - y * sine)+origin.X, (int)Math.Round(x * sine + y * cosine)+origin.Y);
             }
         }
 
@@ -106,11 +111,22 @@ namespace Game
             {
                 var x = (double)size.Width;
                 var y = (double)size.Height;
-                yield return new Size((int)Math.Round(x * cosine - y * sine,MidpointRounding.AwayFromZero), (int)Math.Round(x * sine + y * cosine, MidpointRounding.AwayFromZero));
+                yield return new Size((int)Math.Ceiling(x * cosine - y * sine), (int)Math.Ceiling(x * sine + y * cosine));
             }
         }
 
         public static IEnumerable<Point> RotatePoints(this IEnumerable<Point> points, Direction direction, Point origin = default) =>
             points.RotatePoints(GetAngleFromDirection(direction), origin);
+
+        public static Dictionary<TValue, TKey> ToFlippedDictionary<TKey, TValue>(this IDictionary<TKey, TValue> source)
+        {
+            var dictionary = new Dictionary<TValue, TKey>();
+            foreach (var entry in source)
+            {
+                if (!dictionary.ContainsKey(entry.Value))
+                    dictionary.Add(entry.Value, entry.Key);
+            }
+            return dictionary;
+        }
     }
 }

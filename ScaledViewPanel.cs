@@ -1,5 +1,4 @@
 ﻿using Game.Model;
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -61,13 +60,13 @@ namespace Game
         {
             var shift = GetShift();
             return new PointF(
-                (p.X - shift.X),
-                (p.Y - shift.Y));
+                p.X - shift.X,
+                p.Y - shift.Y);
         }
 
         private PointF GetShift() => new PointF(
-                Parent.ClientSize.Width / 2f - CenterLogicalPos.X ,
-                Parent.ClientSize.Height / 2f - CenterLogicalPos.Y );
+                Parent.ClientSize.Width / 2f - CenterLogicalPos.X,
+                Parent.ClientSize.Height / 2f - CenterLogicalPos.Y);
 
         public Bitmap GetBitmap()
         {
@@ -79,7 +78,7 @@ namespace Game
                 if (FitToWindow)
                 {
                     var vMargin = sceneSize.Height * Parent.ClientSize.Width < Parent.ClientSize.Height * sceneSize.Width;
-                    
+
                     centerLogicalPos = new PointF(sceneSize.Width / 2, sceneSize.Height / 2);
                 }
                 CenterLogicalPos = TileCoordinatesToWindow(GameModel.Snake.Position);
@@ -88,7 +87,7 @@ namespace Game
                 g.TranslateTransform(shift.X, shift.Y);
                 //g.ScaleTransform(ZoomScale, ZoomScale);
 
-                var previewRectangle = new RectangleF(Parent.ClientRectangle.Location,Parent.ClientRectangle.Size);
+                var previewRectangle = new RectangleF(Parent.ClientRectangle.Location-new Size(tileSize,tileSize), Parent.ClientRectangle.Size);
                 previewRectangle.Inflate(new Size(tileSize * 2, tileSize * 2));
                 foreach (var tile in GameModel.CurrentLevel.Where(x => PointInClipRegion(previewRectangle, x.Position, shift)))
                 {
@@ -99,20 +98,22 @@ namespace Game
                     var attack = GameModel.SelectedEntity.Attack;
                     var specificColor = GameModel.SelectedEntity.Drawer.SpecificColor;
                     if (GameModel.IsAccessible && GameModel.SelectedPosition != null)
-                        FillRectangles(g, attack.PossibleArea.Select(x => GameModel.SelectedPosition.Value + x).Where(x => PointInClipRegion(previewRectangle, x, shift)), Color.FromArgb(64, specificColor));
-                    if (GameModel.SelectedEntity.Attack.PossibleArea
-                    .Select(x => GameModel.SelectedPosition + x)
+                        FillRectangles(g, GameModel.AttackPositions.Where(x => PointInClipRegion(previewRectangle, x, shift)), Color.FromArgb(64, specificColor));
+                    if (GameModel.AttackPositions
                     .Contains(MouseLogicalPos))
                         DrawRectangles(g, attack.GetPositions(mouseLogicalPos, GameModel.SelectedEntity.Direction).Where(x => PointInClipRegion(previewRectangle, x, shift)), specificColor, 5);
                 }
-                DrawPath(g, Color.Black, GameModel.Step.GetPathPreview(GameModel.Snake.Kaba).Where(x => PointInClipRegion(previewRectangle, x, shift)));
+                DrawPath(g, Color.Black, GameModel.PlayerScheduler.PathPreview.Where(x => PointInClipRegion(previewRectangle, x, shift)));
                 foreach (var hero in GameModel.Snake.Heroes)
                 {
-                    DrawRectangles(g, GameModel.Step.GetAttackPreview(hero).Where(x => PointInClipRegion(previewRectangle, x, shift)), Color.FromArgb(128, hero.Drawer.SpecificColor), 4);
+                    DrawRectangles(g, 
+                        GameModel.PlayerScheduler.AttackPreview[hero]
+                            .SelectMany(x => x.Where(y => PointInClipRegion(previewRectangle, y, shift))),
+                        Color.FromArgb(128, hero.Drawer.SpecificColor), 4);
                 }
-                foreach (var ghost in GameModel.Step.Ghosts.Where(x => x.Key.Position != x.Value.Position).Where(x => PointInClipRegion(previewRectangle, x.Value.Position, shift)))
+                foreach (var ghost in GameModel.PlayerScheduler.Ghosts.Where(x => x.Value.Count > 1).Where(x => PointInClipRegion(previewRectangle, x.Key.Position, shift)))
                 {
-                    g.DrawImage(ghost.Value.Sprite, new RectangleF(TileCoordinatesToWindow(ghost.Value.Position), new Size(tileSize, tileSize)));
+                    g.DrawImage(ghost.Key.Sprite, new RectangleF(TileCoordinatesToWindow(ghost.Key.Position), new Size(tileSize, tileSize)));
                 }
             }
             return i;
@@ -140,15 +141,15 @@ namespace Game
 
         private PointF TileCoordinatesToWindow(Point coords)
         {
-            var newX = whiteSpace - 2*tileBorderWidth + coords.X * (tileSize + tileBorderWidth);
-            var newY = whiteSpace - 2*tileBorderWidth + coords.Y * (tileSize + tileBorderWidth);
+            var newX = whiteSpace - 2 * tileBorderWidth + coords.X * (tileSize + tileBorderWidth);
+            var newY = whiteSpace - 2 * tileBorderWidth + coords.Y * (tileSize + tileBorderWidth);
             return new PointF(newX, newY);
         }
 
         private Point WindowCoordinatesToTile(PointF coords)
         {
-            var newX = (coords.X - whiteSpace + 2*tileBorderWidth - tileSize / 2) / (tileSize + tileBorderWidth);
-            var newY = (coords.Y - whiteSpace + 2*tileBorderWidth - tileSize / 2) / (tileSize + tileBorderWidth);
+            var newX = (coords.X - whiteSpace + 2 * tileBorderWidth - tileSize / 2) / (tileSize + tileBorderWidth);
+            var newY = (coords.Y - whiteSpace + 2 * tileBorderWidth - tileSize / 2) / (tileSize + tileBorderWidth);
             return Point.Round(new PointF(newX, newY));
         }
 
@@ -158,7 +159,7 @@ namespace Game
             var borderOffset = new Size(tileBorderWidth, tileBorderWidth);
             var tileRectangle = new Rectangle(coords, new Size(tileSize, tileSize));
             var fullRectangle = new Rectangle(coords - borderOffset, tileRectangle.Size + 2 * borderOffset);
-            g.DrawRectangle(new Pen(Color.Black,tileBorderWidth), fullRectangle);
+            g.DrawRectangle(new Pen(Color.Black, tileBorderWidth), fullRectangle);
 
             g.DrawImage(tile.Drawer.GetView(), tileRectangle);
         }

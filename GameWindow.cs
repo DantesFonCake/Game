@@ -22,7 +22,7 @@ namespace Game
         public GameWindow()
         {
             Dock = DockStyle.Fill;
-            Game = new GameModel(21, 21);
+            Game = new GameModel(Levels.Level1);
             Controller = new Controller(Game);
             Timer = new Timer();
 
@@ -83,7 +83,7 @@ namespace Game
                 TextBrush = brush,
                 Image = Properties.Resources.icon_placeholder,
                 Size = new Size(ButtonSize, ButtonSize),
-                Location = new Point(5, ClientSize.Height / 2 + (ButtonSize / 2 + 1)),
+                Location = new Point(5, ClientSize.Height / 2 + ButtonSize / 2 + 1),
                 InactiveBorderWidth = 10,
             };
             eActionButton.AddText(new Point(ButtonSize - 25, 15), "E", new Font(Font.FontFamily, 15));

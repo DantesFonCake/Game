@@ -5,7 +5,7 @@ namespace Game.Model
 {
     public class Hiro : PlayerControlledEntity
     {
-        public Hiro(Point position) : base(position,100,null)
+        public Hiro(GameModel game,Point position) : base(game, position,100,null)
         {
             Drawer = new BasicDrawer(Sprite, CollectImage,Color.Blue);
             Name = "Hiro";
@@ -16,7 +16,7 @@ namespace Game.Model
             rangeOfVision = 9;
         }
 
-        public Hiro(int x, int y) : this(new Point(x, y))
+        public Hiro(GameModel game, int x, int y) : this(game, new Point(x, y))
         {
         }
 
