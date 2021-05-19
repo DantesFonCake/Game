@@ -43,11 +43,23 @@ namespace Game.Model
         public void PlaceObject(GameObject gameObject)
         {
             this[gameObject.X, gameObject.Y].GameObjects.Add(gameObject);
+            gameObject.Removed += GameObject_Removed;
             if (gameObject is Entity entity)
             {
                 entity.Moved += Entity_Moved;
                 entity.Attacked += Entity_Attacked;
             }
+        }
+
+        private void GameObject_Removed(object sender, EventArgs e)
+        {
+            var obj = (GameObject)sender;
+            if (this[obj.Position].GameObjects.Remove(obj))
+                if (obj is Entity entity)
+                {
+                    entity.Moved -= Entity_Moved;
+                    entity.Attacked -= Entity_Attacked;
+                }
         }
 
         public bool CanMove(Point position, Direction direction) => CanMove(position + Utils.GetOffsetFromDirection(direction));
@@ -56,19 +68,21 @@ namespace Game.Model
 
         private void Entity_Attacked(object sender, AttackEventArgs e)
         {
+            if (e.Handled)
+                return;
+            e.Handled = true;
             var attack = e.Attack;
             foreach (var point in e)
             {
                 if (InBounds(point))
                 {
-                    lock (this[point])
+                    lock (this[point].GameObjects)
                     {
                         foreach (var obj in this[point].GameObjects)
                             if (obj is Entity entity)
                             {
                                 entity.DealDamage(attack.Damage, attack.Type);
                             }
-                        this[point].GameObjects.RemoveAll(x => x is Entity e && !e.IsAlive);
                     }
                 }
             }
@@ -76,7 +90,9 @@ namespace Game.Model
 
         private void Entity_Moved(object sender, MovementArgs e)
         {
-
+            if (e.Handled)
+                return;
+            e.Handled = true;
             var entity = (Entity)sender;
             if (CanMove(entity.Position + new Size(e.DX, e.DY)))
             {
@@ -89,6 +105,10 @@ namespace Game.Model
                     return;
                 var newVisionField = Game.Snake.RecalculateVisionField(this);
                 RecalculateVisionField(newVisionField);
+                if (entity is PlayerControlledEntity)
+                {
+                    Game.HasCollectable = Game.HasCollectable||this[entity.Position].GameObjects.Any(x => x.IsCollectable);
+                }
             }
         }
 
@@ -101,10 +121,10 @@ namespace Game.Model
             {
                 var sine = Math.Sin(angle);
                 var cosine = Math.Cos(angle);
-                var size = (X: cosine, Y: sine);
+                var (X, Y) = (cosine, sine);
                 for (double i = 1; i <= radius; i += 0.5)
                 {
-                    var position = start + new Size((int)Math.Truncate(size.X * i), (int)Math.Truncate(size.Y * i));
+                    var position = start + new Size((int)Math.Truncate(X * i), (int)Math.Truncate(Y * i));
                     if (!InBounds(position) || ch.Contains(position))
                         continue;
                     if (borderSelector(this[position]))

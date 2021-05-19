@@ -47,6 +47,7 @@ namespace Game.Model
         #endregion
 
         #region Health and Resistances
+        protected bool RemoveOnDeath = true;
         protected readonly int initialHealth;
         public double Health { get; protected set; }
         public bool IsAlive => (int)Health > 0;
@@ -56,7 +57,19 @@ namespace Game.Model
         {
             if (IsAlive)
                 Health -= damage * ((float)100 - resistances.GetValueOrDefault(attackType, 0)) / 100;
-
+            else
+            {
+                Health = 0;
+                if (RemoveOnDeath)
+                    Remove();
+            }
+        }
+        public void ChangeResistance(AttackType attackType, int d)
+        {
+            if (resistances.ContainsKey(attackType))
+                resistances[attackType] += d;
+            else
+                resistances[attackType] = d;
         }
         #endregion
 

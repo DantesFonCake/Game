@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
-namespace Game
+namespace Game.Model
 {
-    public class AttackEventArgs : IEnumerable<Point>
+    public class AttackEventArgs : CustomEventArgs, IEnumerable<Point>
     {
         public readonly Point[] Points;
         public readonly Attack Attack;

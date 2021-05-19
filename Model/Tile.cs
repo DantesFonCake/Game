@@ -71,7 +71,7 @@ namespace Game.Model
                     {
                         if (gameObject is Entity entity)
                         {
-                            if (entity.IsAlive && IsVisible)
+                            if (IsVisible)
                             {
                                 g.DrawImage(entity.Drawer.GetView(), new Rectangle(Point.Empty, mainImage.Size));
                             }

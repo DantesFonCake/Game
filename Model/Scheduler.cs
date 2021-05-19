@@ -10,17 +10,21 @@ namespace Game.Model
 
         public readonly LinkedList<StepAction> Actions = new LinkedList<StepAction>();
 
-        public virtual void AddMovement(Action<Direction> movement, Direction direction) => Actions.AddLast(new StepAction(null,() => movement(direction), ActionType.Move));
+        public virtual void AddMovement(Action<Direction> movement, Direction direction) => Actions.AddLast(new StepAction(null, () => movement(direction), ActionType.Move));
 
-        public virtual void AddAttack(Entity entity, Point position , Point? initialPosition=null)
+        public virtual void AddAttack(Entity entity, Point position,Direction direction=Direction.None, Point? initialPosition = null)
         {
-            if(initialPosition==null)
-                initialPosition = entity.Position;
-            if (!entity.Attack.IsRanged)
-                Actions.AddLast(new StepAction(entity,() => entity.MoveTo(position), ActionType.NotPreviewable));
-            Actions.AddLast(new StepAction(entity,() => entity.AttackPosition(position), ActionType.Attack));
-            if (!entity.Attack.IsRanged)
-                Actions.AddLast(new StepAction(entity,() => entity.MoveTo(initialPosition.Value), ActionType.NotPreviewable));
+            if (entity.Attack != null)
+            {
+
+                if (initialPosition == null)
+                    initialPosition = entity.Position;
+                if (!entity.Attack.IsRanged)
+                    Actions.AddLast(new StepAction(entity, () => entity.MoveTo(position), ActionType.NotPreviewable));
+                Actions.AddLast(new StepAction(entity, () => entity.AttackPosition(position,direction), ActionType.Attack));
+                if (!entity.Attack.IsRanged)
+                    Actions.AddLast(new StepAction(entity, () => entity.MoveTo(initialPosition.Value), ActionType.NotPreviewable));
+            }
         }
 
         public virtual bool Commit()

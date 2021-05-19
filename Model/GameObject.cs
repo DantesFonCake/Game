@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 
 namespace Game.Model
 {
@@ -8,6 +9,9 @@ namespace Game.Model
 
         private bool isCollectable = false;
         private bool isRigid = true;
+
+        public event EventHandler Removed;
+
         public bool IsSeeThrough { get; protected set; } = true;
         public Direction Direction { get; protected set; } = Direction.Down;
         public Point Position { get; set; }
@@ -51,6 +55,11 @@ namespace Game.Model
         {
             Position = position;
             Game = game;
+        }
+
+        public virtual void Remove()
+        {
+            Removed?.Invoke(this, EventArgs.Empty);
         }
 
         public abstract BasicDrawer Drawer { get; protected set; }

@@ -70,8 +70,8 @@ namespace Game
 
         public Bitmap GetBitmap()
         {
-            var i = new Bitmap(Parent.ClientSize.Width, Parent.ClientSize.Height);
-            using (var g = Graphics.FromImage(i))
+            var map = new Bitmap(Parent.ClientSize.Width, Parent.ClientSize.Height);
+            using (var g = Graphics.FromImage(map))
             {
                 g.Clear(Color.LightGray);
                 var sceneSize = Parent.ClientSize;
@@ -101,7 +101,7 @@ namespace Game
                         FillRectangles(g, GameModel.AttackPositions.Where(x => PointInClipRegion(previewRectangle, x, shift)), Color.FromArgb(64, specificColor));
                     if (GameModel.AttackPositions
                     .Contains(MouseLogicalPos))
-                        DrawRectangles(g, attack.GetPositions(mouseLogicalPos, GameModel.SelectedEntity.Direction).Where(x => PointInClipRegion(previewRectangle, x, shift)), specificColor, 5);
+                        DrawRectangles(g, attack.GetPositions(mouseLogicalPos, Controller.Direction).Where(x => PointInClipRegion(previewRectangle, x, shift)), specificColor, 5);
                 }
                 DrawPath(g, Color.Black, GameModel.PlayerScheduler.PathPreview.Where(x => PointInClipRegion(previewRectangle, x, shift)));
                 foreach (var hero in GameModel.Snake.Heroes)
@@ -116,7 +116,7 @@ namespace Game
                     g.DrawImage(ghost.Key.Sprite, new RectangleF(TileCoordinatesToWindow(ghost.Key.Position), new Size(tileSize, tileSize)));
                 }
             }
-            return i;
+            return map;
         }
 
         private bool PointInClipRegion(RectangleF clipRectangle, Point x, PointF shift) => clipRectangle.Contains(TileCoordinatesToWindow(x) + new SizeF(shift));

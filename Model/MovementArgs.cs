@@ -1,6 +1,6 @@
 ﻿namespace Game
 {
-    public class MovementArgs
+    public class MovementArgs:CustomEventArgs
     {
         public readonly int DX, DY;
         public MovementArgs(int dX, int dY)

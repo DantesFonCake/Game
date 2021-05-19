@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace Game.Model
@@ -6,6 +7,8 @@ namespace Game.Model
     public class Snake : IPlaceable
     {
         public GameModel Game;
+
+        public event EventHandler Removed;
 
         public Kaba Kaba { get; private set; }
         public Hiro Hiro { get; private set; }
@@ -88,11 +91,20 @@ namespace Game.Model
             var result = new HashSet<Point>();
             foreach (var hero in Heroes)
             {
+                if (!hero.IsAlive)
+                    continue;
                 foreach (var point in hero.RecalculateVisionField(level))
                     result.Add(point);
             }
             return result;
         }
 
+        public void Remove()
+        {
+            foreach (var hero in Heroes)
+            {
+                hero.Remove();
+            }
+        }
     }
 }

@@ -7,30 +7,24 @@ using System.Text;
 
 namespace Game
 {
-    class TestEntity : Entity
+    internal class TestEntity : Entity
     {
         public override BasicDrawer Drawer { get; protected set; } = null;
         public override Bitmap Sprite => null;
         public Scheduler Scheduler;
 
-        public TestEntity(int x, int y) : base(null, x, y)
-        {
-            Scheduler = new Scheduler();
-        }
+        public TestEntity(int x, int y) : base(null, x, y) => Scheduler = new Scheduler();
 
         public void SetAttack(Attack attack) => Attack = attack;
         public void SetResistance(AttackType type, int resistance) => resistances[type] = resistance;
     }
 
-    class TestObject : GameObject
+    internal class TestObject : GameObject
     {
         public override BasicDrawer Drawer { get; protected set; } = null;
         public override Bitmap Sprite => null;
 
-        public TestObject(int x, int y) : base(null, x, y)
-        {
-            IsRigid = true;
-        }
+        public TestObject(int x, int y) : base(null, x, y) => IsRigid = true;
     }
 
     public class LevelCreationTests
@@ -60,7 +54,7 @@ namespace Game
             {
                 line.Append(" ;");
             }
-            line.Remove(line.Length-1, 1);
+            line.Remove(line.Length - 1, 1);
             var level = Enumerable.Range(0, y).Select(x => line.ToString()).ToArray();
             var game = new GameModel(level);
             Assert.IsTrue(HaveLevel(game));
@@ -100,7 +94,7 @@ namespace Game
             }
             line.Remove(line.Length - 1, 1);
             level[y] = line.ToString();
-            var (l, _) = LevelCreator.FromLines(null, level);
+            var l = LevelCreator.FromLines(null, level, out var snake, out var enemies);
             Assert.IsTrue(l.InBounds(x, y) && l[x, y].GameObjects.Count > 0);
         }
     }
@@ -108,7 +102,7 @@ namespace Game
     public class EntityBasicTests
     {
 
-        
+
         [Test]
         [TestCase(1, 2, 10, 10)]
         [TestCase(1, 2, 5, 3)]
@@ -135,7 +129,7 @@ namespace Game
             Assert.IsTrue(level.InBounds(5, 5) && level[5, 5].GameObjects.Contains(entity));
             entity.Move(direction);
             var position = new Point(5, 5) + direction.GetOffsetFromDirection();
-            Assert.IsTrue(CheckForEntity(position,entity,level));
+            Assert.IsTrue(CheckForEntity(position, entity, level));
         }
 
         [Test]
@@ -170,9 +164,9 @@ namespace Game
 
     public class AttackTests
     {
-        TestEntity Entity;
-        TestEntity Entity1;
-        Level Level;
+        private TestEntity Entity;
+        private TestEntity Entity1;
+        private Level Level;
         [SetUp]
         public void CreateAll()
         {
@@ -188,21 +182,21 @@ namespace Game
         public void Test_AttackDealsDamage()
         {
             Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Fire, 10, 1, false));
-            var initialHealth = Entity1.Health;           
+            var initialHealth = Entity1.Health;
             Entity.AttackPosition(Entity.Position);
-            Assert.IsTrue(Entity1.Health<initialHealth);
+            Assert.IsTrue(Entity1.Health < initialHealth);
         }
 
         [Test]
         public void Test_EntityDies()
         {
-            Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Fire, (int)(Entity1.Health+1), 1, false));
+            Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Fire, (int)(Entity1.Health + 1), 1, false));
             Entity.AttackPosition(Entity.Position);
             Assert.IsTrue(!Entity1.IsAlive);
         }
 
         [Test]
-        public void Test_AttackTypeResistanceReducesDamage([Random(10,100,10)] int resistance)
+        public void Test_AttackTypeResistanceReducesDamage([Random(10, 100, 10)] int resistance)
         {
             var initialDamage = 20;
             var initialHealth = Entity1.Health;
@@ -210,14 +204,14 @@ namespace Game
             Entity1.SetResistance(AttackType.Physical, resistance);
             Entity.AttackPosition(Entity.Position);
             var dealtDamage = initialHealth - Entity1.Health;
-            Assert.AreEqual(100 - dealtDamage / initialDamage * 100, resistance,1e-3);
+            Assert.AreEqual(100 - dealtDamage / initialDamage * 100, resistance, 1e-3);
         }
     }
 
     public class SteppingTests
     {
-        TestEntity Entity;
-        Level Level;
+        private TestEntity Entity;
+        private Level Level;
 
         [SetUp]
         public void CreateAll()
@@ -228,9 +222,9 @@ namespace Game
             Level.PlaceObject(Entity);
         }
 
-        [TestCase(new[] { Direction.Right})]
-        [TestCase(new[] { Direction.Right, Direction.Down,Direction.Up,Direction.Left })]
-        [TestCase(new[] { Direction.Right, Direction.Right ,Direction.Down })]
+        [TestCase(new[] { Direction.Right })]
+        [TestCase(new[] { Direction.Right, Direction.Down, Direction.Up, Direction.Left })]
+        [TestCase(new[] { Direction.Right, Direction.Right, Direction.Down })]
         public void Test_MovementSteps(Direction[] path)
         {
             var position = Entity.Position;
@@ -255,7 +249,7 @@ namespace Game
                 Entity.Scheduler.AddMovement(x => Entity.Move(x), dir);
                 count++;
             }
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 Entity.Scheduler.Unschedule();
             }
@@ -271,7 +265,7 @@ namespace Game
             var initialHealth = entity1.Health;
             Entity.Scheduler.AddAttack(Entity, Entity.Position);
             Entity.Scheduler.Commit();
-            Assert.IsTrue(entity1.Health<initialHealth);
+            Assert.IsTrue(entity1.Health < initialHealth);
         }
 
         [Test]
@@ -281,7 +275,7 @@ namespace Game
             var initialHealth = entity1.Health;
             Level.PlaceObject(entity1);
             Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Right);
-            Entity.Scheduler.AddAttack(Entity, Entity.Position+Direction.Right.GetOffsetFromDirection());
+            Entity.Scheduler.AddAttack(Entity, Entity.Position + Direction.Right.GetOffsetFromDirection());
             Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Down);
             Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Right);
             Entity.Scheduler.Commit();
@@ -289,7 +283,7 @@ namespace Game
             Entity.Scheduler.Commit();
             Assert.IsTrue(new Point(1, 0) == Entity.Position && entity1.Health < initialHealth);
             initialHealth = entity1.Health;
-            while(Entity.Scheduler.Commit());
+            while (Entity.Scheduler.Commit()) ;
             Assert.IsTrue(new Point(2, 1) == Entity.Position && entity1.Health == initialHealth);
         }
     }

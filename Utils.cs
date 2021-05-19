@@ -32,7 +32,7 @@ namespace Game
         public static Direction Copy(this Direction en) => (Direction)(int)en;
 
         public static Direction GetDirectionFromOffset(this Point offset) => GetDirectionFromOffset(offset.X, offset.Y);
-        public static Direction KeyCodeToDirection(this Keys keyCode)
+        public static Direction ToDirection(this Keys keyCode)
             => keyCode switch
             {
                 Keys.W => Direction.Up,
@@ -52,7 +52,7 @@ namespace Game
             return offsets.Select(x => point + x);
         }
 
-        public static double GetDistance(this Point point, Point point2) => 
+        public static double GetDistance(this Point point, Point point2) =>
             Math.Sqrt((point.X - point2.X) * (point.X - point2.X) +
                 (point.Y - point2.Y) * (point.Y - point2.Y));
 
@@ -79,7 +79,7 @@ namespace Game
             Direction.Right => new Size(1, 0),
             Direction.Up => new Size(0, -1),
             Direction.Down => new Size(0, 1),
-            _ => throw new ArgumentException(),
+            _ => new Size(0, 0),
         };
 
         public static double GetAngleFromDirection(this Direction direction) => direction switch
@@ -88,7 +88,7 @@ namespace Game
             Direction.Up => -Math.PI / 2,
             Direction.Left => Math.PI,
             Direction.Down => Math.PI / 2,
-            _ => throw new NotImplementedException(),
+            _ => 0,
         };
 
         public static IEnumerable<Point> RotatePoints(this IEnumerable<Point> points, double angle, Point origin = default)
@@ -99,7 +99,7 @@ namespace Game
             {
                 var x = (double)point.X - origin.X;
                 var y = (double)point.Y - origin.Y;
-                yield return new Point((int)Math.Round(x * cosine - y * sine)+origin.X, (int)Math.Round(x * sine + y * cosine)+origin.Y);
+                yield return new Point((int)Math.Round(x * cosine - y * sine) + origin.X, (int)Math.Round(x * sine + y * cosine) + origin.Y);
             }
         }
 
@@ -117,6 +117,36 @@ namespace Game
 
         public static IEnumerable<Point> RotatePoints(this IEnumerable<Point> points, Direction direction, Point origin = default) =>
             points.RotatePoints(GetAngleFromDirection(direction), origin);
+
+        public static double DistanceTo(this Point point1, Point point2)
+            => Math.Sqrt((point2.X - point1.X) * (point2.X - point1.X) + (point2.Y - point1.Y) * (point2.Y - point1.Y));
+
+        public static HashSet<Point> BFSForLevel(this Level level, Point start, HashSet<Point> destinations)
+        {
+            var queue = new Queue<Point>();
+            queue.Enqueue(start);
+            var track = new Dictionary<Point, SinglyLinkedList<Point>>
+            {
+                [start] = new SinglyLinkedList<Point>(start)
+            };
+            while (queue.Count != 0)
+            {
+                var node = queue.Dequeue();
+                foreach (var neighbour in GetAdjancent(node))
+                {
+
+                    if (!level.InBounds(neighbour) || !level[neighbour].IsPassable && !destinations.Contains(neighbour) || track.ContainsKey(neighbour))
+                        continue;
+                    track[neighbour] = new SinglyLinkedList<Point>(neighbour, track[node]);
+                    queue.Enqueue(neighbour);
+                    if (destinations.Contains(neighbour))
+                    {
+                        return track[neighbour].ToHashSet();
+                    }
+                }
+            }
+            return new HashSet<Point>();
+        }
 
         public static Dictionary<TValue, TKey> ToFlippedDictionary<TKey, TValue>(this IDictionary<TKey, TValue> source)
         {

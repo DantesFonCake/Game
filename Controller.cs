@@ -8,6 +8,7 @@ namespace Game.Model
     public class Controller
     {
         private static readonly Keys[] movingKeys = new[] { Keys.W, Keys.A, Keys.D, Keys.S, Keys.Up, Keys.Right, Keys.Left, Keys.Down };
+        public Direction Direction { get; protected set; }
         public Controller(GameModel game) => Game = game;
 
         public GameModel Game { get; }
@@ -15,9 +16,13 @@ namespace Game.Model
         private void HandleMovingKeyPress(Keys keyCode)
         {
             if (Game.ReadyToAttack)
-                Game.SelectedEntity.Rotate(keyCode.KeyCodeToDirection());
+                //Game.SelectedEntity.Rotate(keyCode.ToDirection());
+                Direction = keyCode.ToDirection();
             else
-                Game.TrySheduleMove(keyCode.KeyCodeToDirection());
+            {
+                Direction = Direction.None;
+                Game.TrySheduleMove(keyCode.ToDirection());
+            }
         }
 
         public void HandleKeyPress(Keys keyCode)
@@ -35,10 +40,24 @@ namespace Game.Model
                         Game.CommitStep();
                         break;
                     case Keys.E:
-                        Game.SelectAttackE();
+                        Game.SelectAttack(KeyedAttack.EAttack);
                         break;
                     case Keys.Q:
-                        Game.SelectAttackQ();
+                        Game.SelectAttack(KeyedAttack.QAttack);
+                        break;
+                    case Keys.F:
+                        if (Game.HasCollectable)
+                        {
+                            var items = Game.Snake.Heroes
+                                .Where(x => x.IsAlive)
+                                .Select(x => Game.CurrentLevel[x.Position])
+                                .SelectMany(x => x.GameObjects)
+                                .Where(x => x is ICollectable).Select(x => (ICollectable)x).ToArray();
+                            foreach (var item in items)
+                            {
+                                item.Collect();
+                            }
+                        }
                         break;
                     case Keys.Z:
                         Game.TryUndoScheduled();
@@ -48,6 +67,12 @@ namespace Game.Model
                         break;
                     case Keys.D2:
                         Game.SelectEntity(Game.Snake.Hiro);
+                        break;
+                    case Keys.D3:
+                        Game.SelectEntity(Game.Snake.Hana);
+                        break;
+                    case Keys.D4:
+                        Game.SelectEntity(Game.Snake.Naru);
                         break;
 
                 }
@@ -63,7 +88,7 @@ namespace Game.Model
                     if (!Game.ReadyToAttack)
                         Game.SelectEntity(logicalPosition);
                     else
-                        Game.TryScheduleAttack(logicalPosition);
+                        Game.TryScheduleAttack(logicalPosition, Direction);
                 }
                 else if (button == MouseButtons.Right)
                 {

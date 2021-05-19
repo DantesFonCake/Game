@@ -16,6 +16,7 @@ namespace Game.Model
             ["Hi"] = GameObjectTypes.Hiro,
             ["Na"] = GameObjectTypes.Naru,
             ["E"] = GameObjectTypes.Enemy,
+            ["CI"]=GameObjectTypes.CollectableItem,
         };
         private static readonly Dictionary<Type, GameObjectTypes> TypeToGameObjectType = new Dictionary<Type, GameObjectTypes>()
         {
@@ -25,6 +26,7 @@ namespace Game.Model
             [typeof(Hiro)] = GameObjectTypes.Hiro,
             [typeof(Naru)] = GameObjectTypes.Naru,
             [typeof(BasicEnemy)] = GameObjectTypes.Enemy,
+            [typeof(CollectableGameObject)]=GameObjectTypes.CollectableItem,
         };
         private static readonly Dictionary<GameObjectTypes, string> ObjectTypesRepr = TypesDictionary.ToFlippedDictionary();
         private static readonly Dictionary<GameObjectTypes, Type> GameObjectTypesToType = TypeToGameObjectType.ToFlippedDictionary();
@@ -35,18 +37,29 @@ namespace Game.Model
 
         public static GameObjectTypes StringToGameObject(this string s) => TypesDictionary[s];
 
-        public static GameObject GenerateObject(this GameObjectTypes type, GameModel game, int x, int y) => (GameObject)GameObjectTypesToType[type].GetConstructor(new[] { typeof(GameModel), typeof(int), typeof(int) }).Invoke(new object[] { game, x, y });
+        public static GameObject GenerateObject(this GameObjectTypes type, GameModel game, int x, int y)
+        {
+            if (type == GameObjectTypes.CollectableItem)
+            {
+                var random = Utils.GetRandomInt();
+                var itemType = random > 50 ? random > 80 ? ItemTypes.Shield : ItemTypes.SharpeningStone : ItemTypes.Boots;
+                return CollectableItems.Items[itemType](game,new Point(x,y));
+                //return CollectableItems.Items[ItemTypes.Boots](game, new Point(x, y));
+            }
+            return (GameObject)GameObjectTypesToType[type].GetConstructor(new[] { typeof(GameModel), typeof(int), typeof(int) }).Invoke(new object[] { game, x, y });
+        }
         #endregion
 
-        public static (Level Level, Snake Snake) FromString(GameModel game, string lines) 
-            => FromLines(game, lines.Split('\n', '\r').Where(x => !string.IsNullOrEmpty(x)).ToArray());
+        public static Level FromString(GameModel game, string lines, out Snake snake,out List<BasicEnemy> enemies)
+            => FromLines(game, lines.Split('\n', '\r').Where(x => !string.IsNullOrEmpty(x)).ToArray(),out snake,out enemies);
 
-        public static (Level, Snake) FromLines(GameModel game, string[] lines)
+        public static Level FromLines(GameModel game, string[] lines, out Snake snake,out List<BasicEnemy> enemies)
         {
             var tiles = lines.Select(line => line.Split(';').Select(tile => tile.Split(',')).ToArray()).ToArray();
             var xSize = tiles[0].Length;
             var ySize = tiles.Length;
             var level = new Level(game, xSize, ySize);
+            enemies = new List<BasicEnemy>();
             Kaba kaba = null;
             Hiro hiro = null;
             Naru naru = null;
@@ -57,7 +70,7 @@ namespace Game.Model
                 {
                     foreach (var repr in tiles[y][x])
                     {
-                        if (string.IsNullOrEmpty(repr)||string.IsNullOrWhiteSpace(repr))
+                        if (string.IsNullOrEmpty(repr) || string.IsNullOrWhiteSpace(repr))
                             continue;
                         var obj = repr.StringToGameObject().GenerateObject(game, x, y);
                         if (obj is Kaba)
@@ -68,18 +81,18 @@ namespace Game.Model
                             naru = (Naru)obj;
                         else if (obj is Hana)
                             hana = (Hana)obj;
+                        else if (obj is BasicEnemy)
+                            enemies.Add((BasicEnemy)obj);
                         level.PlaceObject(obj);
                     }
                 }
             }
-            if(kaba!=null&&hiro!=null&&naru!=null&&hana!=null)
-                return (level, new Snake(game, kaba, hiro, hana, naru));
-            return (level, null);
+            snake = kaba != null && hiro != null && naru != null && hana != null 
+                ? new Snake(game, kaba, hiro, hana, naru) 
+                : null;
+            return level;
         }
 
-        public static Level OfSize(GameModel game,Size size)
-        {
-            return new Level(game, size.Width, size.Height);
-        }
+        public static Level OfSize(GameModel game, Size size) => new Level(game, size.Width, size.Height);
     }
 }
