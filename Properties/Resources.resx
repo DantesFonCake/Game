@@ -157,6 +157,9 @@
   <data name="Naru_Front_FaceOnly" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\textures\naru_front_faceonly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="sharpening_stone" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\sharpening_stone.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="shield" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\textures\shield.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

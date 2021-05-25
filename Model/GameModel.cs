@@ -10,10 +10,14 @@ namespace Game.Model
     {
         public Level CurrentLevel { get; private set; }
         public PlayerControlledEntity SelectedEntity { get; private set; }
-        public bool HasCollectable { get; set; } = false;
+        public bool HasCollectable => Snake.Heroes
+            .Where(x => x.IsAlive)
+            .Any(x => 
+                CurrentLevel[x.Position].GameObjects
+                .Any(y => y.IsCollectable));
         public bool IsPlayerStep { get; protected set; } = true;
-        private List<BasicEnemy> AIControlled = new List<BasicEnemy>();
-        private readonly AIStub AI;
+        
+        private readonly BasicAI AI;
         public Point? SelectedPosition => SelectedEntity.Ghost?.Position;
         public IEnumerable<Point> AttackPositions => SelectedEntity.GetPossibleAttackPositions(CurrentLevel, SelectedPosition.Value).Distinct();
         public KeyedAttack SelectedAttack { get; private set; }
@@ -28,20 +32,21 @@ namespace Game.Model
             }
         }
         public bool IsAccessible { get; private set; } = true;
-        public bool EnemyStepScheduled { get; private set; } = false;
+
 
         public List<Action> ScheduledPath = new List<Action>();
-        private readonly Timer Timer = new Timer();
         public PlayerScheduler PlayerScheduler;
         public Snake Snake;
+
         private bool readyToAttack;
+        private readonly Timer Timer = new Timer();
 
         public GameModel(string[] level)
         {
             Timer.Interval = 1000 / 2.4;
             Timer.Elapsed += GameModelActionTimer_Tick;
-            AI = new AIStub(this);
-            var l = LevelCreator.FromLines(this, level, out var snake, out AIControlled);
+            var l = LevelCreator.FromLines(this, level, out var snake, out var aiControlled);
+            AI = new BasicAI(this,aiControlled);
             CurrentLevel = l;
             if (snake == null)
                 return;
@@ -59,24 +64,8 @@ namespace Game.Model
             }
             else
             {
-                if (!EnemyStepScheduled)
+                if (!AI.CommitStep())
                 {
-                    foreach (var enemy in AIControlled)
-                    {
-                        var positions = Snake.Heroes.Where(x => x.IsAlive).Select(x => x.Position);
-                        if (!AI.TryScheduleAttack(enemy, positions))
-                            AI.ScheduleTowards(enemy, positions);
-                    }
-                    EnemyStepScheduled = true;
-                }
-                var enemiesLeft = false;
-                foreach (var enemy in AIControlled)
-                {
-                    enemiesLeft = enemiesLeft | enemy.Scheduler.Commit();
-                }
-                if (!enemiesLeft)
-                {
-                    EnemyStepScheduled = false;
                     IsPlayerStep = true;
                     Timer.Stop();
                     IsAccessible = true;
@@ -88,18 +77,15 @@ namespace Game.Model
 
         public void TryScheduleAttack(Point position, Direction direction)
         {
-            if (SelectedEntity != null)
-                if (SelectedEntity.GetPossibleAttackPositions(CurrentLevel, SelectedPosition.Value).Contains(position))
-                    if (SelectedEntity.Attack.IsRanged || SelectedEntity.Position == position || CurrentLevel[position].IsPassable)
-                    {
-
-                        PlayerScheduler.AddAttack(SelectedEntity, position, direction, SelectedPosition);
-                    }
+            if (SelectedEntity != null
+                && SelectedEntity.GetPossibleAttackPositions(CurrentLevel, SelectedPosition.Value).Contains(position)
+                && (SelectedEntity.Attack.IsRanged || SelectedEntity.Position == position || CurrentLevel[position].IsPassable))
+                PlayerScheduler.AddAttack(SelectedEntity, position, direction, SelectedPosition);
         }
 
         public void SelectAttack(KeyedAttack attack)
         {
-            if(attack==KeyedAttack.None)
+            if (attack == KeyedAttack.None)
             {
                 ReadyToAttack = false;
                 SelectedAttack = attack;
@@ -119,6 +105,7 @@ namespace Game.Model
                 if (SelectedEntity.Cooldowns.GetValueOrDefault(attack, 0) > 0)
                 {
                     SelectedAttack = KeyedAttack.None;
+                    ReadyToAttack = false;
                     return;
                 }
                 SelectedEntity.SelectAttack(attack);
@@ -140,20 +127,21 @@ namespace Game.Model
         {
             ReadyToAttack = false;
             IsAccessible = false;
+            foreach (var enemy in AI.AIControlled)
+                enemy.StartVisionFieldCalculation(CurrentLevel);
             if (isImmediate)
                 while (PlayerScheduler.Commit()) ;
             else
                 Timer.Start();
             foreach (var hero in Snake.Heroes)
-                foreach (var key in hero.Cooldowns.Keys)
-                    if (hero.Cooldowns[key] > 0)
-                        hero.Cooldowns[key] -= 1;
+                hero.ReduceCooldowns();
         }
 
         //TODO
         public void MoveToNextLevel(string[] lines)
         {
-            var l = LevelCreator.FromLines(this, lines, out var snake, out AIControlled);
+            var l = LevelCreator.FromLines(this, lines, out var snake, out var AIControlled);
+            AI.ReplaceControlled(AIControlled);
             CurrentLevel = l;
             if (snake == null)
                 return;
@@ -183,14 +171,15 @@ namespace Game.Model
 
         public void SelectEntity(Point point)
         {
-            if (IsAccessible)
-            {
-                var s = PlayerScheduler.Ghosts.Keys.FirstOrDefault(x => x.Position == point);
-                var entity = s != null
-                    ? s.Entity
-                    : CurrentLevel[point].GameObjects.Where(x => x is PlayerControlledEntity).Select(x => x as PlayerControlledEntity).FirstOrDefault();
-                SelectEntity(entity);
-            }
+            if (CurrentLevel.InBounds(point))
+                if (IsAccessible)
+                {
+                    var s = PlayerScheduler.Ghosts.Keys.FirstOrDefault(x => x.Position == point);
+                    var entity = s != null
+                        ? s.Entity
+                        : CurrentLevel[point].GameObjects.Where(x => x is PlayerControlledEntity).Select(x => x as PlayerControlledEntity).FirstOrDefault();
+                    SelectEntity(entity);
+                }
         }
     }
 }

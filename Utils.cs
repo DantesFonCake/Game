@@ -31,7 +31,7 @@ namespace Game
 
         public static Direction Copy(this Direction en) => (Direction)(int)en;
 
-        public static Direction GetDirectionFromOffset(this Point offset) => GetDirectionFromOffset(offset.X, offset.Y);
+        public static Direction GetDirectionFromOffset(this Size offset) => GetDirectionFromOffset(offset.Width, offset.Height);
         public static Direction ToDirection(this Keys keyCode)
             => keyCode switch
             {

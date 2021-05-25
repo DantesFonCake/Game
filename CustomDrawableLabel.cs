@@ -39,6 +39,8 @@ namespace Game
         public override void Draw(Graphics g)
         {
             base.Draw(g);
+            if (!Visible)
+                return;
             var textSize = new SizeF(Text.Length * Font.SizeInPoints, Font.SizeInPoints);
             var textLocation = Location;//new Point(Location); //+ Size.Truncate(textSize / 2));
             g.DrawString(Text, Font, textBrush, textLocation);

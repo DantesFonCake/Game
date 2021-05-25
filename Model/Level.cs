@@ -42,7 +42,7 @@ namespace Game.Model
 
         public void PlaceObject(GameObject gameObject)
         {
-            this[gameObject.X, gameObject.Y].GameObjects.Add(gameObject);
+            this[gameObject.X, gameObject.Y].AddObject(gameObject);
             gameObject.Removed += GameObject_Removed;
             if (gameObject is Entity entity)
             {
@@ -54,12 +54,15 @@ namespace Game.Model
         private void GameObject_Removed(object sender, EventArgs e)
         {
             var obj = (GameObject)sender;
-            if (this[obj.Position].GameObjects.Remove(obj))
+            if (this[obj.Position].RemoveObject(obj))
+            {
+                obj.Removed -= GameObject_Removed;
                 if (obj is Entity entity)
                 {
                     entity.Moved -= Entity_Moved;
                     entity.Attacked -= Entity_Attacked;
                 }
+            }
         }
 
         public bool CanMove(Point position, Direction direction) => CanMove(position + Utils.GetOffsetFromDirection(direction));
@@ -76,14 +79,9 @@ namespace Game.Model
             {
                 if (InBounds(point))
                 {
-                    lock (this[point].GameObjects)
-                    {
-                        foreach (var obj in this[point].GameObjects)
-                            if (obj is Entity entity)
-                            {
-                                entity.DealDamage(attack.Damage, attack.Type);
-                            }
-                    }
+                    foreach (var obj in this[point].GameObjects)
+                        if (obj is Entity entity)
+                            entity.DealDamage(attack.Damage, attack.Type);
                 }
             }
         }
@@ -96,19 +94,13 @@ namespace Game.Model
             var entity = (Entity)sender;
             if (CanMove(entity.Position + new Size(e.DX, e.DY)))
             {
-                lock (this[entity.Position].GameObjects)
-                    this[entity.Position].GameObjects.Remove(entity);
+                this[entity.Position].RemoveObject(entity);
                 entity.Position = new Point(entity.X + e.DX, entity.Y + e.DY);
-                lock (this[entity.Position].GameObjects)
-                    this[entity.Position].GameObjects.Add(entity);
+                this[entity.Position].AddObject(entity);
                 if (Game == null || Game.Snake == null)
                     return;
                 var newVisionField = Game.Snake.RecalculateVisionField(this);
                 RecalculateVisionField(newVisionField);
-                if (entity is PlayerControlledEntity)
-                {
-                    Game.HasCollectable = Game.HasCollectable||this[entity.Position].GameObjects.Any(x => x.IsCollectable);
-                }
             }
         }
 

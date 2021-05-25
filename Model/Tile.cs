@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace Game.Model
 {
     public class Tile : IDrawable
     {
         public static IReadOnlyList<Bitmap> Variations { get; } = new[]
-                {
+        {
             Properties.Resources.grass_1,
             Properties.Resources.grass_2,
             Properties.Resources.grass_3
@@ -24,15 +25,20 @@ namespace Game.Model
         }
         public bool IsVisible { get; set; } = false;
         public bool IsUnknown { get; set; } = true;
-        public bool IsPassable => GameObjects.TrueForAll(x => !x.IsRigid);
-        public bool IsSeeThrough => GameObjects.TrueForAll(x => x.IsSeeThrough);
+        public bool IsPassable => GameObjects.All(x => !x.IsRigid);
+        public bool IsSeeThrough => GameObjects.All(x => x.IsSeeThrough);
         public Level Level;
         private static Bitmap unknownTile;
-        public List<GameObject> GameObjects { get; private set; } = new List<GameObject>(3);
+        public GameObject[] GameObjects => gameObjects.ToArray();
+        private List<GameObject> gameObjects=new List<GameObject>(3);
 
         public BasicDrawer Drawer { get; protected set; }
 
         public Bitmap Sprite { get; private set; }
+
+        public void AddObject(GameObject gameObject) => gameObjects.Add(gameObject);
+
+        public bool RemoveObject(GameObject gameObject) => gameObjects.Remove(gameObject);
 
         public Tile(Point position, Level level)
         {
@@ -65,8 +71,6 @@ namespace Game.Model
             var mainImage = new Bitmap(drawer.Sprite);
             using (var g = Graphics.FromImage(mainImage))
             {
-                lock (GameObjects)
-                {
                     foreach (var gameObject in GameObjects)
                     {
                         if (gameObject is Entity entity)
@@ -79,7 +83,6 @@ namespace Game.Model
                         else
                             g.DrawImage(gameObject.Drawer.GetView(), new Rectangle(Point.Empty, mainImage.Size));
                     }
-                }
                 if (!IsVisible)
                     g.FillRectangle(new SolidBrush(Color.FromArgb(96, Color.Black)), new Rectangle(Point.Empty, mainImage.Size));
             }
@@ -87,6 +90,6 @@ namespace Game.Model
             return mainImage;
         }
 
-        public void ClearTile() => GameObjects = new List<GameObject>();
+        //public void ClearTile() => GameObjects = new List<GameObject>();
     }
 }

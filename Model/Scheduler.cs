@@ -16,7 +16,6 @@ namespace Game.Model
         {
             if (entity.Attack != null)
             {
-
                 if (initialPosition == null)
                     initialPosition = entity.Position;
                 if (!entity.Attack.IsRanged)
@@ -38,7 +37,13 @@ namespace Game.Model
 
         public virtual bool Unschedule()
         {
+            var last = Actions.Last.Value;
             Actions.RemoveLast();
+            if (last.ActionType == ActionType.NotPreviewable)
+            {
+                Unschedule();
+                Unschedule();
+            }
             return Actions.Count > 0;
         }
 

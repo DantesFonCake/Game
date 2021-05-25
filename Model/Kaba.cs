@@ -13,9 +13,9 @@ namespace Game.Model
             );
             Name = "Kaba";
             var pattern = new[] { new Size(1, -1), new Size(1, 0), new Size(1, 1) };
-            EAttack = new Attack(pattern, AttackType.Physical, 20, 2, false,2);
+            EAttack = new Attack(pattern, AttackType.Physical, 20, 2, false, 2);
             pattern = new[] { new Size(1, 0), new Size(2, 0) };
-            QAttack = new Attack(pattern, AttackType.Physical, 28, 2, false,2);
+            QAttack = new Attack(pattern, AttackType.Physical, 28, 2, false, 2);
         }
         public Kaba(GameModel game, int x, int y) : this(game, new Point(x, y))
         {

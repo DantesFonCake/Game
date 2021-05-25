@@ -9,7 +9,7 @@ namespace Game.Model
     {
 
         public bool IsPlayerControlled { get; protected set; }
-        public string Name { get; protected set; }
+
 
         public Entity(GameModel game, int x, int y, int health = 100, Dictionary<AttackType, int> resistances = null) : this(game, new Point(x, y), health, resistances)
         {
@@ -24,13 +24,13 @@ namespace Game.Model
 
         #region Movement and Rotation
         public event EventHandler<MovementArgs> Moved;
-        internal void Rotate(Direction direction) => Direction = direction;
+        public void Rotate(Direction direction) => Direction = direction;
         public virtual void MoveTo(Point newPosition, bool directionCheck = false)
         {
-            var offset = newPosition - new Size(Position);
+            var offset = new Size(newPosition) - new Size(Position);
             if (directionCheck)
             {
-                var direction = Utils.GetDirectionFromOffset(offset);
+                var direction = offset.GetDirectionFromOffset();
                 Direction = direction == Direction.None ? Direction : direction;
             }
             OnMove(offset);
@@ -39,11 +39,11 @@ namespace Game.Model
         public virtual void Move(Direction direction)
         {
             Direction = direction;
-            OnMove(new Point(Utils.GetOffsetFromDirection(direction)));
+            OnMove(direction.GetOffsetFromDirection());
         }
 
         private void OnMove(int dX, int dY) => Moved?.Invoke(this, new MovementArgs(dX, dY));
-        private void OnMove(Point offset) => OnMove(offset.X, offset.Y);
+        private void OnMove(Size offset) => OnMove(offset.Width, offset.Height);
         #endregion
 
         #region Health and Resistances
@@ -75,7 +75,7 @@ namespace Game.Model
 
         #region Attack
         public event EventHandler<AttackEventArgs> Attacked;
-        public Attack Attack{ get; protected set;}
+        public Attack Attack{ get; protected set; }
         public virtual void AttackPosition(Point position, Direction attackDirection = Direction.None)
         {
             if (Attack != null)
@@ -98,9 +98,7 @@ namespace Game.Model
             var image = new Bitmap(drawer.Sprite);
             image.RotateFlip(rotate);
             using (var g = Graphics.FromImage(image))
-            {
                 g.FillRectangle(Brushes.Green, 2, image.Height - 5, (float)((image.Width - 4) * (Health / initialHealth)), 4);
-            }
             return image;
         }
 

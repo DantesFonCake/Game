@@ -16,8 +16,8 @@ namespace Game
         private ScaledViewPanel mainGameView;
         private CustomDrawableComponent hudContainer;
         private Dictionary<PlayerControlledEntity, CustomDrawableButton> customButtons;
-        private CustomDrawableButton qActionButton;
-        private CustomDrawableButton eActionButton;
+        private readonly Dictionary<KeyedAttack, CustomDrawableButton> actionButtons = new Dictionary<KeyedAttack, CustomDrawableButton>();
+        private readonly Dictionary<KeyedAttack, ProgressBar> actionBars = new Dictionary<KeyedAttack, ProgressBar>();
         private readonly CustomDrawableButton collectItemButton;
         public event EventHandler<CustomMouseEventArg> ClickPerformed;
 
@@ -84,17 +84,17 @@ namespace Game
                 b.Lock();
                 b.Click += (_, arg) =>
                 {
-                    if(e==Game.SelectedEntity)
+                    if (e == Game.SelectedEntity)
                     {
                         Game.SelectEntity(null);
                         return;
-                    }    
+                    }
                     Game.SelectEntity(e);
                 };
             }
             #endregion
             #region Action Selection Button Creation
-            qActionButton = new CustomDrawableButton(this)
+            var qActionButton = new CustomDrawableButton(this)
             {
                 Image = Properties.Resources.icon_placeholder,
                 Size = new Size(ButtonSize, ButtonSize),
@@ -107,11 +107,10 @@ namespace Game
             };
             var label = new CustomDrawableLabel(this)
             {
-                //Location = new Point(ButtonSize - 25, 15),
-                Location = new Point(30, 5),
+                Location = new Point(ButtonSize - 35, 15),
                 Text = "Q",
                 TextColor = textColor,
-                Font = new Font(Font.FontFamily, 12),
+                Font = new Font(Font.FontFamily, 18),
                 Size = new Size(qActionButton.ClipRectangle.Width - 5, qActionButton.ClipRectangle.Height - 2),
             };
             qActionButton.AddChild(label);
@@ -124,8 +123,26 @@ namespace Game
                 }
                 Game.SelectAttack(KeyedAttack.QAttack);
             };
+            actionButtons[KeyedAttack.QAttack] = qActionButton;
+            var qActionBar = new ProgressBar(this,
+                0, 100,
+                () =>
+                {
+                    return (int)(Game.SelectedEntity != null
+                    ? (double)Game.SelectedEntity.Cooldowns.GetValueOrDefault(KeyedAttack.QAttack, 0)
+                        / Game.SelectedEntity.QAttack.Cooldown * 100
+                    : 0);
+                })
+            {
+                Location = Point.Empty,
+                Size = qActionButton.ClipRectangle.Size,
+                InactiveBorderWidth = 0,
+                CompletedColor = Color.FromArgb(20, Color.Gray),
+            };
+            actionBars[KeyedAttack.QAttack] = qActionBar;
+            qActionButton.AddChild(qActionBar);
             hudContainer.AddChild(qActionButton);
-            eActionButton = new CustomDrawableButton(this)
+            var eActionButton = new CustomDrawableButton(this)
             {
                 Image = Properties.Resources.icon_placeholder,
                 Size = new Size(ButtonSize, ButtonSize),
@@ -137,15 +154,13 @@ namespace Game
             };
             label = new CustomDrawableLabel(this)
             {
-                //Location = new Point(ButtonSize-25, 15),
-                Location = new Point(30, 5),
+                Location = new Point(ButtonSize-35, 15),
                 Text = "E",
                 TextColor = textColor,
-                Font = new Font(Font.FontFamily, 12),
+                Font = new Font(Font.FontFamily, 18),
                 Size = new Size(qActionButton.ClipRectangle.Width - 5, qActionButton.ClipRectangle.Height - 2),
             };
             eActionButton.AddChild(label);
-            hudContainer.AddChild(eActionButton);
             eActionButton.Click += (s, e) =>
             {
                 if (Game.SelectedAttack == KeyedAttack.EAttack)
@@ -155,6 +170,25 @@ namespace Game
                 }
                 Game.SelectAttack(KeyedAttack.EAttack);
             };
+            actionButtons[KeyedAttack.EAttack] = eActionButton;
+            var eActionBar = new ProgressBar(this,
+                0, 100,
+                () =>
+                {
+                    return (int)(Game.SelectedEntity != null
+                    ? (double)Game.SelectedEntity.Cooldowns.GetValueOrDefault(KeyedAttack.EAttack, 0)
+                        / Game.SelectedEntity.EAttack.Cooldown * 100
+                    : 0);
+                })
+            {
+                Location = Point.Empty,
+                Size = qActionButton.ClipRectangle.Size,
+                InactiveBorderWidth = 0,
+                CompletedColor = Color.FromArgb(20, Color.Gray),
+            };
+            eActionButton.AddChild(eActionBar);
+            actionBars[KeyedAttack.EAttack] = eActionBar;
+            hudContainer.AddChild(eActionButton);
             #endregion
             #region Item Collect Button Creation
             //collectItemButton = new CustomDrawableComponent(this)
@@ -175,38 +209,19 @@ namespace Game
 
         private void TimerTick(object sender, EventArgs e)
         {
-            Text = $"LogicalLocation: {mainGameView.MouseLogicalPos}, StepActionsLeft: {Game.PlayerScheduler.MaxActionCount-Game.PlayerScheduler.ActionCount}";
+            Text = $"LogicalLocation: {mainGameView.MouseLogicalPos}, StepActionsLeft: {Game.PlayerScheduler.MaxActionCount - Game.PlayerScheduler.ActionCount}";
 
-            if (Game.SelectedEntity != null)
+            foreach (var button in actionButtons)
             {
-                qActionButton.Enabled = true;
-                eActionButton.Enabled = true;
-                switch (Game.SelectedAttack)
-                {
-                    default:
-                    case KeyedAttack.None:
-                        qActionButton.Deselect();
-                        eActionButton.Deselect();
-                        break;
-                    case KeyedAttack.EAttack:
-                        eActionButton.Select();
-                        qActionButton.Deselect();
-                        break;
-                    case KeyedAttack.QAttack:
-                        eActionButton.Deselect();
-                        qActionButton.Select();
-                        break;
-                }
+                button.Value.Enabled = Game.SelectedEntity != null;
+                if (button.Value.Enabled && button.Key == Game.SelectedAttack)
+                    button.Value.Select();
+                else
+                    button.Value.Deselect();
+                actionBars[button.Key].Visible = actionBars[button.Key].CurrentValue != 0;
             }
-            else
-            {
-                qActionButton.Enabled = false;
-                eActionButton.Enabled = false;
-            }
-
             foreach (var (ent, b) in customButtons)
             {
-
                 if (Game.SelectedEntity == ent)
                     b.Select();
                 else
@@ -221,28 +236,14 @@ namespace Game
             base.OnPaint(e);
             e.Graphics.DrawImage(mainGameView.GetBitmap(), Point.Empty);
             hudContainer.Draw(e.Graphics);
-            //qActionButton.Draw(e.Graphics);
-            //eActionButton.Draw(e.Graphics);
-            //foreach (var b in customButtons.Values)
-            //{
-            //    b.Draw(e.Graphics);
-            //}
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
-            //if (imageUpdateComplete)
-            //{
-
             Controller.HandleKeyPress(e.KeyCode);
-            //imageUpdateComplete = false;
-            //}
         }
 
         protected override void OnMouseClick(MouseEventArgs e) => ClickPerformed?.Invoke(this, new CustomMouseEventArg(e));
-
-        private int GetPercentFromWidth(float percent) => (int)(percent != 0 ? ClientSize.Width * percent / 100 : 0);
-        private int GetPercentFromHeight(float percent) => (int)(percent != 0 ? ClientSize.Height * percent / 100 : 0);
     }
 }

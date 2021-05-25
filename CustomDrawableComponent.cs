@@ -17,7 +17,6 @@ namespace Game
                 ParentSize = parent == null ? Window.ClientSize : parent.Size;
             }
         }
-        private bool enabled = true;
         private readonly List<CustomDrawableComponent> components;
 
         #region Location and Size
@@ -109,16 +108,9 @@ namespace Game
             }
         }
 
-        public virtual bool Hovered
-        {
-            get;
-            protected set;
-        }
-        public virtual bool Enabled
-        {
-            get => enabled;
-            set => enabled = value;
-        }
+        public virtual bool Hovered { get; protected set; }
+        public virtual bool Enabled { get; set; }
+        public virtual bool Visible { get; set; } = true;
         public Bitmap Image { get; set; }
         public Color HoveredColor { get; set; } = Color.Transparent;
         public Color DisabledColor { get; set; } = Color.Transparent;
@@ -163,18 +155,20 @@ namespace Game
 
         public virtual void Draw(Graphics g)
         {
-            var image = Image == null ? new Bitmap(Size.Width, Size.Height) : new Bitmap(Image);
+            if (!Visible)
+                return;
+            var image = Image == null ? new Bitmap(Size.Width, Size.Height) : new Bitmap(Image,Size);
+            var drawRectangle = new Rectangle(new Point(InactiveBorderWidth, InactiveBorderWidth), ClipRectangle.Size);
             using var graph = Graphics.FromImage(image);
+            if (Enabled && Hovered)
+                graph.FillRectangle(new SolidBrush(HoveredColor), drawRectangle);
+            if (!Enabled)
+                graph.FillRectangle(new SolidBrush(DisabledColor), drawRectangle);
             foreach (var item in Components)
             {
                 item.Draw(graph);
             }
-            if (Hovered && Enabled)
-                graph.FillRectangle(new SolidBrush(HoveredColor), ClipRectangle);
-            if (!Enabled)
-                graph.FillRectangle(new SolidBrush(DisabledColor), ClipRectangle);
             g.DrawImage(image, new Rectangle(Location, Size));
-
         }
     }
 }

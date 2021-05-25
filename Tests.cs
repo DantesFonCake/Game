@@ -95,7 +95,7 @@ namespace Game
             line.Remove(line.Length - 1, 1);
             level[y] = line.ToString();
             var l = LevelCreator.FromLines(null, level, out var snake, out var enemies);
-            Assert.IsTrue(l.InBounds(x, y) && l[x, y].GameObjects.Count > 0);
+            Assert.IsTrue(l.InBounds(x, y) && l[x, y].GameObjects.Length > 0);
         }
     }
 

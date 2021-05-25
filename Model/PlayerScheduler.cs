@@ -86,8 +86,8 @@ namespace Game.Model
                 PathPreview.RemoveFirst();
             }
             else if (act.ActionType == ActionType.Attack)
-                AttackPreview[act.Target as PlayerControlledEntity].RemoveLast();
-            ActionCount--;
+                AttackPreview[act.Target as PlayerControlledEntity].RemoveFirst();
+            ActionCount -= ActionCount <= 0 ? 0 : 1;
             return base.Commit();
         }
 
@@ -107,7 +107,7 @@ namespace Game.Model
             }
             else if (act.ActionType == ActionType.Attack)
                 AttackPreview[act.Target as PlayerControlledEntity].RemoveLast();
-            ActionCount--;
+            ActionCount -= ActionCount <= 0 ? 0 : 1;
             return base.Unschedule();
         }
         #endregion

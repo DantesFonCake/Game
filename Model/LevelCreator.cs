@@ -43,7 +43,7 @@ namespace Game.Model
             {
                 var random = Utils.GetRandomInt();
                 var itemType = random > 50 ? random > 80 ? ItemTypes.Shield : ItemTypes.SharpeningStone : ItemTypes.Boots;
-                return CollectableItems.Items[itemType](game,new Point(x,y));
+                return CollectableItemsFactory.Items[itemType](game,new Point(x,y));
                 //return CollectableItems.Items[ItemTypes.Boots](game, new Point(x, y));
             }
             return (GameObject)GameObjectTypesToType[type].GetConstructor(new[] { typeof(GameModel), typeof(int), typeof(int) }).Invoke(new object[] { game, x, y });

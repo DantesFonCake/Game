@@ -13,9 +13,9 @@ namespace Game
             get => base.Enabled;
             set
             {
+                base.Enabled = value;
                 if (!Enabled)
                     Deselect();
-                base.Enabled = value;
             }
         }
         public void Select() => Selected = true;
@@ -54,6 +54,8 @@ namespace Game
         public override void Draw(Graphics g)
         {
             base.Draw(g);
+            if (!Visible)
+                return;
             if (Selected)
                 g.FillRectangle(new SolidBrush(SelectedColor), ClipRectangle);
         }

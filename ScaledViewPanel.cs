@@ -85,7 +85,6 @@ namespace Game
                 var shift = GetShift();
                 g.ResetTransform();
                 g.TranslateTransform(shift.X, shift.Y);
-                //g.ScaleTransform(ZoomScale, ZoomScale);
 
                 var previewRectangle = new RectangleF(Parent.ClientRectangle.Location-new Size(tileSize,tileSize), Parent.ClientRectangle.Size);
                 previewRectangle.Inflate(new Size(tileSize * 2, tileSize * 2));
