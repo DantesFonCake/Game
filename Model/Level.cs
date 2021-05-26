@@ -10,6 +10,7 @@ namespace Game.Model
     public class Level : IEnumerable<Tile>
     {
         public Tile[] Map;
+        HashSet<Exit> exits = new HashSet<Exit>();
         public int XSize { get; private set; }
         public int YSize { get; private set; }
         public Tile this[int x, int y]
@@ -44,6 +45,8 @@ namespace Game.Model
         {
             this[gameObject.X, gameObject.Y].AddObject(gameObject);
             gameObject.Removed += GameObject_Removed;
+            if (gameObject is Exit exit)
+                exits.Add(exit);
             if (gameObject is Entity entity)
             {
                 entity.Moved += Entity_Moved;
@@ -99,9 +102,20 @@ namespace Game.Model
                 this[entity.Position].AddObject(entity);
                 if (Game == null || Game.Snake == null)
                     return;
-                var newVisionField = Game.Snake.RecalculateVisionField(this);
+                if (exits.Select(x=>x.Position).Contains(Game.Snake.Position))
+                {
+                    Game.MoveToNextLevel();
+                    return;
+                }
+                var newVisionField = Game.Snake.GetVisionField(this);
                 RecalculateVisionField(newVisionField);
             }
+        }
+
+        public void OpenGates()
+        {
+            foreach (var exit in exits)
+                exit.Open();
         }
 
         public IEnumerable<Point> GetAccesibleTiles(Point start, int radius, bool includeBorders, Func<Tile, bool> borderSelector)

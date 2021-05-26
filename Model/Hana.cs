@@ -11,6 +11,7 @@ namespace Game.Model
         public Hana(GameModel game, Point position) : base(game, position, 80, null)
         {
             Name = "Hana";
+            Description = "Quick tempered Mage. Does Fire and Ice damage";
             Drawer = new BasicDrawer(
                 Sprite,
                 CollectImage,

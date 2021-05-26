@@ -10,13 +10,14 @@ namespace Game.Model
     {
         public Level CurrentLevel { get; private set; }
         public PlayerControlledEntity SelectedEntity { get; private set; }
-        public bool HasCollectable => Snake.Heroes
+        public bool HaveCollectable => Snake.Heroes
             .Where(x => x.IsAlive)
-            .Any(x => 
+            .Any(x =>
                 CurrentLevel[x.Position].GameObjects
                 .Any(y => y.IsCollectable));
         public bool IsPlayerStep { get; protected set; } = true;
-        
+
+        private readonly IEnumerator<string[]> levelEnumerator = Levels.AllLevels.GetEnumerator();
         private readonly BasicAI AI;
         public Point? SelectedPosition => SelectedEntity.Ghost?.Position;
         public IEnumerable<Point> AttackPositions => SelectedEntity.GetPossibleAttackPositions(CurrentLevel, SelectedPosition.Value).Distinct();
@@ -39,37 +40,60 @@ namespace Game.Model
         public Snake Snake;
 
         private bool readyToAttack;
+        private bool IsStepInWork = false;
         private readonly Timer Timer = new Timer();
 
-        public GameModel(string[] level)
+        public GameModel(bool initialize = false)
         {
             Timer.Interval = 1000 / 2.4;
             Timer.Elapsed += GameModelActionTimer_Tick;
-            var l = LevelCreator.FromLines(this, level, out var snake, out var aiControlled);
-            AI = new BasicAI(this,aiControlled);
-            CurrentLevel = l;
+            AI = new BasicAI(this, new List<BasicEnemy>());
+            if (initialize)
+                Initialize();
+        }
+
+        private void Initialize()
+        {
+            if (levelEnumerator.MoveNext())
+                Initialize(levelEnumerator.Current);
+        }
+
+        private void Initialize(string[] levelLines)
+        {
+            var level = LevelCreator.FromLines(this, levelLines, out var aiControlled, out Snake snake);
+            CurrentLevel = level;
             if (snake == null)
                 return;
             Snake = snake;
+            Snake.PlaceItself(level);
             PlayerScheduler = new PlayerScheduler(snake);
-            l.RecalculateVisionField(Snake.RecalculateVisionField(l));
+            level.RecalculateVisionField(Snake.GetVisionField(level));
         }
+
+        public GameModel(string[] levelLines) : this() => Initialize(levelLines);
 
 
         private void GameModelActionTimer_Tick(object sender, ElapsedEventArgs e)
         {
-            if (IsPlayerStep)
+            if (!IsStepInWork)
             {
-                IsPlayerStep = PlayerScheduler.Commit();
-            }
-            else
-            {
-                if (!AI.CommitStep())
+                IsStepInWork = true;
+                if (IsPlayerStep)
                 {
-                    IsPlayerStep = true;
-                    Timer.Stop();
-                    IsAccessible = true;
+                    IsPlayerStep = PlayerScheduler.Commit();
                 }
+                else
+                {
+                    if (!AI.CommitStep())
+                    {
+                        IsPlayerStep = true;
+                        Timer.Stop();
+                        IsAccessible = true;
+                        if (!AI.AnyAlive)
+                            CurrentLevel.OpenGates();
+                    }
+                }
+                IsStepInWork = false;
             }
         }
 
@@ -127,27 +151,39 @@ namespace Game.Model
         {
             ReadyToAttack = false;
             IsAccessible = false;
-            foreach (var enemy in AI.AIControlled)
+            foreach (var enemy in AI.AIControlled.Where(x => x.IsAlive))
                 enemy.StartVisionFieldCalculation(CurrentLevel);
             if (isImmediate)
+            {
                 while (PlayerScheduler.Commit()) ;
+                while (AI.CommitStep()) ;
+            }
             else
                 Timer.Start();
             foreach (var hero in Snake.Heroes)
                 hero.ReduceCooldowns();
         }
 
-        //TODO
-        public void MoveToNextLevel(string[] lines)
+
+        private void MoveToNextLevel(string[] lines)
         {
-            var l = LevelCreator.FromLines(this, lines, out var snake, out var AIControlled);
-            AI.ReplaceControlled(AIControlled);
-            CurrentLevel = l;
-            if (snake == null)
+            Timer.Stop();
+            var level = LevelCreator.FromLines(this, lines, out var aiControlled, out Tuple<Point, Point, Point, Point> snakePositions);
+            AI.ReplaceControlled(aiControlled);
+            CurrentLevel = level;
+            IsAccessible = true;
+            IsPlayerStep = true;
+            ReadyToAttack = false;
+            if (Snake == null || snakePositions == null)
                 return;
-            Snake = snake;
-            PlayerScheduler = new PlayerScheduler(snake);
-            l.RecalculateVisionField(Snake.RecalculateVisionField(l));
+            Snake.PlaceItself(level, snakePositions);
+            level.RecalculateVisionField(Snake.GetVisionField(level));
+        }
+
+        public void MoveToNextLevel()
+        {
+            if (levelEnumerator.MoveNext())
+                MoveToNextLevel(levelEnumerator.Current);
         }
 
         public void SelectEntity(Entity entity)

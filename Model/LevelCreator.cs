@@ -17,6 +17,7 @@ namespace Game.Model
             ["Na"] = GameObjectTypes.Naru,
             ["E"] = GameObjectTypes.Enemy,
             ["CI"]=GameObjectTypes.CollectableItem,
+            ["Ex"]=GameObjectTypes.Exit,
         };
         private static readonly Dictionary<Type, GameObjectTypes> TypeToGameObjectType = new Dictionary<Type, GameObjectTypes>()
         {
@@ -27,6 +28,7 @@ namespace Game.Model
             [typeof(Naru)] = GameObjectTypes.Naru,
             [typeof(BasicEnemy)] = GameObjectTypes.Enemy,
             [typeof(CollectableGameObject)]=GameObjectTypes.CollectableItem,
+            [typeof(Exit)]=GameObjectTypes.Exit,
         };
         private static readonly Dictionary<GameObjectTypes, string> ObjectTypesRepr = TypesDictionary.ToFlippedDictionary();
         private static readonly Dictionary<GameObjectTypes, Type> GameObjectTypesToType = TypeToGameObjectType.ToFlippedDictionary();
@@ -44,26 +46,22 @@ namespace Game.Model
                 var random = Utils.GetRandomInt();
                 var itemType = random > 50 ? random > 80 ? ItemTypes.Shield : ItemTypes.SharpeningStone : ItemTypes.Boots;
                 return CollectableItemsFactory.Items[itemType](game,new Point(x,y));
-                //return CollectableItems.Items[ItemTypes.Boots](game, new Point(x, y));
             }
             return (GameObject)GameObjectTypesToType[type].GetConstructor(new[] { typeof(GameModel), typeof(int), typeof(int) }).Invoke(new object[] { game, x, y });
         }
         #endregion
 
         public static Level FromString(GameModel game, string lines, out Snake snake,out List<BasicEnemy> enemies)
-            => FromLines(game, lines.Split('\n', '\r').Where(x => !string.IsNullOrEmpty(x)).ToArray(),out snake,out enemies);
+            => FromLines(game, lines.Split('\n', '\r').Where(x => !string.IsNullOrEmpty(x)).ToArray(),out enemies, out snake);
 
-        public static Level FromLines(GameModel game, string[] lines, out Snake snake,out List<BasicEnemy> enemies)
+        public static Level FromLines(GameModel game, string[] lines, out List<BasicEnemy> enemies,out Tuple<Point,Point,Point,Point> nextSnakeposition)
         {
             var tiles = lines.Select(line => line.Split(';').Select(tile => tile.Split(',')).ToArray()).ToArray();
             var xSize = tiles[0].Length;
             var ySize = tiles.Length;
             var level = new Level(game, xSize, ySize);
             enemies = new List<BasicEnemy>();
-            Kaba kaba = null;
-            Hiro hiro = null;
-            Naru naru = null;
-            Hana hana = null;
+            Point? kabaPosition=null, hiroPosition=null, naruPosition=null, hanaPosition=null;
             for (var x = 0; x < xSize; x++)
             {
                 for (var y = 0; y < ySize; y++)
@@ -72,24 +70,42 @@ namespace Game.Model
                     {
                         if (string.IsNullOrEmpty(repr) || string.IsNullOrWhiteSpace(repr))
                             continue;
-                        var obj = repr.StringToGameObject().GenerateObject(game, x, y);
-                        if (obj is Kaba)
-                            kaba = (Kaba)obj;
-                        else if (obj is Hiro)
-                            hiro = (Hiro)obj;
-                        else if (obj is Naru)
-                            naru = (Naru)obj;
-                        else if (obj is Hana)
-                            hana = (Hana)obj;
-                        else if (obj is BasicEnemy)
-                            enemies.Add((BasicEnemy)obj);
-                        level.PlaceObject(obj);
+                        var type = repr.StringToGameObject();
+                        switch (type)
+                        { 
+                            case GameObjectTypes.Hana:
+                                hanaPosition = new Point(x, y);
+                                break;
+                            case GameObjectTypes.Kaba:
+                                kabaPosition = new Point(x, y);
+                                break;
+                            case GameObjectTypes.Hiro:
+                                hiroPosition = new Point(x, y);
+                                break;
+                            case GameObjectTypes.Naru:
+                                naruPosition = new Point(x, y);
+                                break;
+                            default:
+                                var obj = repr.StringToGameObject().GenerateObject(game, x, y);                                
+                                if (obj is BasicEnemy enemy)
+                                    enemies.Add(enemy);
+                                level.PlaceObject(obj);
+                                break;
+                        }                      
                     }
                 }
             }
-            snake = kaba != null && hiro != null && naru != null && hana != null 
-                ? new Snake(game, kaba, hiro, hana, naru) 
-                : null;
+            if (kabaPosition.HasValue && hiroPosition.HasValue && hanaPosition.HasValue && naruPosition.HasValue)
+                nextSnakeposition = Tuple.Create(kabaPosition.Value, hiroPosition.Value, hanaPosition.Value, naruPosition.Value);
+            else
+                nextSnakeposition = null;
+            return level;
+        }
+
+        public static Level FromLines(GameModel game, string[] lines, out List<BasicEnemy> enemies, out Snake snake)
+        {
+            var level = FromLines(game, lines,out enemies, out Tuple<Point, Point, Point, Point> snakePosition);
+            snake = snakePosition != null ? new Snake(game, snakePosition) : null;
             return level;
         }
 

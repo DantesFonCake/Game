@@ -14,6 +14,7 @@ namespace Game.Model
         public Naru(GameModel game,Point position) : base(game, position, 80, null)
         {
             Name = "Naru";
+            Description = "Careless Assasin. Can do Physical and Poison damage";
             Drawer = new BasicDrawer(
                 Sprite,
                 CollectImage,

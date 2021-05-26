@@ -20,7 +20,6 @@ namespace Game
             FitToWindow = true;
             Parent.ClickPerformed += (_, e) => OnMouseClick(e);
             Parent.MouseMove += (_, e) => OnMouseMove(e);
-            //Parent.MouseWheel += (_, e) => OnMouseWheel(e);
         }
 
         private PointF centerLogicalPos;

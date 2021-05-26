@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
@@ -10,8 +9,9 @@ namespace Game.Model
         public Attack EAttack { get; protected set; }
         public Attack QAttack { get; protected set; }
         public Ghost Ghost { get; private set; }
-        public IReadOnlyDictionary<KeyedAttack, int> Cooldowns => cooldowns.ToDictionary(x=>x.Key,x=>x.Value);
-           Dictionary<KeyedAttack,int> cooldowns= new Dictionary<KeyedAttack, int>();
+        public IReadOnlyDictionary<KeyedAttack, int> Cooldowns => cooldowns.ToDictionary(x => x.Key, x => x.Value);
+
+        private readonly Dictionary<KeyedAttack, int> cooldowns = new Dictionary<KeyedAttack, int>();
         public bool CanQAttack => Cooldowns.GetValueOrDefault(KeyedAttack.QAttack, 0) <= 0;
         public bool CanEAttack => Cooldowns.GetValueOrDefault(KeyedAttack.EAttack, 0) <= 0;
         private KeyedAttack selectedAttack = KeyedAttack.None;
@@ -36,9 +36,15 @@ namespace Game.Model
 
         public override void AttackPosition(Point position, Direction attackDirection = Direction.None)
         {
-                if (Attack.Cooldown > 0)
+            if (Attack.Cooldown > 0)
+            {
+                if (cooldowns.ContainsKey(selectedAttack))
+
+                    cooldowns[selectedAttack] += Attack.Cooldown;
+                else
                     cooldowns[selectedAttack] = Attack.Cooldown;
-                base.AttackPosition(position, attackDirection);
+            }
+            base.AttackPosition(position, attackDirection);
         }
 
         public void ReduceCooldowns()

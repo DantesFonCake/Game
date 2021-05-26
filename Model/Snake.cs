@@ -50,6 +50,10 @@ namespace Game.Model
             Scheduler = new PlayerScheduler(this);
         }
 
+        public Snake(GameModel game, Tuple<Point, Point, Point, Point> snakePosition):this(game,snakePosition.Item1,snakePosition.Item2,snakePosition.Item3,snakePosition.Item4)
+        {
+        }
+
         public void MoveInDirection(Direction direction)
         {
 
@@ -65,7 +69,6 @@ namespace Game.Model
 
         public void PlaceItself(Level level)
         {
-
             level.PlaceObject(Kaba);
             level.PlaceObject(Hiro);
             level.PlaceObject(Hana);
@@ -86,7 +89,16 @@ namespace Game.Model
             PlaceItself(level);
         }
 
-        public HashSet<Point> RecalculateVisionField(Level level)
+        public void PlaceItself(Level level, Tuple<Point, Point, Point, Point> positions)
+        {
+            Kaba.Position = positions.Item1;
+            Hiro.Position = positions.Item2;
+            Hana.Position = positions.Item3;
+            Naru.Position = positions.Item4;
+            PlaceItself(level);
+        }
+
+        public HashSet<Point> GetVisionField(Level level)
         {
             var result = new HashSet<Point>();
             foreach (var hero in Heroes)

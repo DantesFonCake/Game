@@ -24,6 +24,7 @@ namespace Game
         private Size size;
         private int inactiveBorderWidth;
         private Rectangle clipRectangle;
+
         public Point Location
         {
             get => location;
@@ -41,6 +42,7 @@ namespace Game
             set
             {
                 size = value;
+                SizeChanged?.Invoke(this, EventArgs.Empty);
                 RecalculateClipRectangle();
             }
         }
@@ -60,7 +62,7 @@ namespace Game
         public Rectangle ClipRectangle => clipRectangle;
         #endregion
         #region Position and Size Locking
-        private bool locked = false;
+        private bool Locked = false;
         private float XLocationPercent;
         private float YLocationPercent;
         private float XSizePercent;
@@ -75,7 +77,7 @@ namespace Game
             XSizePercent = (float)Size.Width / ParentSize.Width;
             YSizePercent = (float)Size.Height / ParentSize.Height;
             BorderWidthPercent = (float)inactiveBorderWidth / ParentSize.Height;
-            locked = true;
+            Locked = true;
         }
         #endregion
 
@@ -96,9 +98,10 @@ namespace Game
         public event EventHandler<CustomMouseEventArg> ClickPerformed;
 
         public void OnClickPerformed(object sender, CustomMouseEventArg e) => ClickPerformed?.Invoke(this, e);
+
         private void OnParentResize()
         {
-            if (locked)
+            if (Locked)
             {
                 Location = Point.Round(new PointF(ParentSize.Width * XLocationPercent, ParentSize.Height * YLocationPercent));
                 Size = Size.Round(new SizeF(ParentSize.Width * XSizePercent, ParentSize.Height * YSizePercent));
@@ -112,15 +115,18 @@ namespace Game
         public virtual bool Enabled { get; set; }
         public virtual bool Visible { get; set; } = true;
         public Bitmap Image { get; set; }
+        public Color BackColor { get; set; } = Color.Transparent;
         public Color HoveredColor { get; set; } = Color.Transparent;
         public Color DisabledColor { get; set; } = Color.Transparent;
 
-        protected IReadOnlyList<CustomDrawableComponent> Components => components;
+        public IReadOnlyList<CustomDrawableComponent> Components => components;
 
         public CustomDrawableComponent(GameWindow window)
         {
             components = new List<CustomDrawableComponent>();
             Window = window;
+            Location = Point.Empty;
+            Size = parent?.Size ?? window.ClientSize;
             ReboundParent(parent);
         }
 
@@ -140,6 +146,12 @@ namespace Game
             }
             else
             {
+                if (Window != null)
+                {
+                    Window.SizeChanged -= OnParentResize;
+                    Window.MouseMove -= OnMouseMove;
+                    Window.ClickPerformed -= OnClickPerformed;
+                }
                 parent.SizeChanged += OnParentResize;
                 parent.MouseMove += OnMouseMove;
                 parent.ClickPerformed += OnClickPerformed;
@@ -157,9 +169,13 @@ namespace Game
         {
             if (!Visible)
                 return;
-            var image = Image == null ? new Bitmap(Size.Width, Size.Height) : new Bitmap(Image,Size);
-            var drawRectangle = new Rectangle(new Point(InactiveBorderWidth, InactiveBorderWidth), ClipRectangle.Size);
+            var image = new Bitmap(Size.Width, Size.Height);
             using var graph = Graphics.FromImage(image);
+            if(BackColor!=Color.Transparent)
+                graph.FillRectangle(new SolidBrush(BackColor), new Rectangle(Point.Empty, Size));
+            if (Image != null)
+                graph.DrawImage(Image, new Rectangle(Point.Empty, Size));
+            var drawRectangle = new Rectangle(new Point(InactiveBorderWidth, InactiveBorderWidth), ClipRectangle.Size);
             if (Enabled && Hovered)
                 graph.FillRectangle(new SolidBrush(HoveredColor), drawRectangle);
             if (!Enabled)

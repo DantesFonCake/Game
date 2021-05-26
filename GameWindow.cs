@@ -9,16 +9,18 @@ namespace Game
 {
     public partial class GameWindow : Form
     {
+        private readonly Font MainFont = new Font(FontFamily.GenericSerif, 25, GraphicsUnit.Pixel);
         private const int ButtonSize = 96;
         private readonly Timer Timer;
+        private new Point MousePosition;
         private readonly GameModel Game;
         private readonly Controller Controller;
         private ScaledViewPanel mainGameView;
         private CustomDrawableComponent hudContainer;
+        private FloatingTooltip tooltip;
         private Dictionary<PlayerControlledEntity, CustomDrawableButton> customButtons;
         private readonly Dictionary<KeyedAttack, CustomDrawableButton> actionButtons = new Dictionary<KeyedAttack, CustomDrawableButton>();
         private readonly Dictionary<KeyedAttack, ProgressBar> actionBars = new Dictionary<KeyedAttack, ProgressBar>();
-        private readonly CustomDrawableButton collectItemButton;
         public event EventHandler<CustomMouseEventArg> ClickPerformed;
 
         public GameWindow()
@@ -43,11 +45,19 @@ namespace Game
                 Size = ClientSize,
                 Location = Point.Empty,
             };
+            tooltip = new FloatingTooltip(this, 25)
+            {
+                Size = new Size(96*3, 96*2),
+                Visible = false,
+                Font = MainFont,
+                BackColor = ColorTranslator.FromHtml("#094f0f"),
+            };
+            hudContainer.AddChild(tooltip);
             #region Button Creation
             var hoveredColor = Color.FromArgb(96, Color.Green);
             var disabledColor = Color.FromArgb(96, Color.Gray);
             var selectedColor = Color.FromArgb(96, Color.Yellow);
-            var textColor = Color.Aquamarine;
+            var textColor = Color.Black;
             #region Character Selection Button Creation
             customButtons = Game.Snake.Heroes.ToDictionary(x => x, x =>
             {
@@ -70,7 +80,7 @@ namespace Game
                     Location = new Point(ButtonSize / 2 - 25, ButtonSize - 27 - 10),
                     Size = new Size(b.ClipRectangle.Width - 5, b.ClipRectangle.Height - 2),
                     Text = x.Name,
-                    Font = new Font(Font.FontFamily, 15),
+                    Font = MainFont,
                     TextColor = textColor,
                 };
                 b.AddChild(label);
@@ -94,6 +104,7 @@ namespace Game
             }
             #endregion
             #region Action Selection Button Creation
+            var barColor = Color.FromArgb(40, Color.Red);
             var qActionButton = new CustomDrawableButton(this)
             {
                 Image = Properties.Resources.icon_placeholder,
@@ -110,7 +121,7 @@ namespace Game
                 Location = new Point(ButtonSize - 35, 15),
                 Text = "Q",
                 TextColor = textColor,
-                Font = new Font(Font.FontFamily, 18),
+                Font = MainFont,
                 Size = new Size(qActionButton.ClipRectangle.Width - 5, qActionButton.ClipRectangle.Height - 2),
             };
             qActionButton.AddChild(label);
@@ -126,18 +137,14 @@ namespace Game
             actionButtons[KeyedAttack.QAttack] = qActionButton;
             var qActionBar = new ProgressBar(this,
                 0, 100,
-                () =>
-                {
-                    return (int)(Game.SelectedEntity != null
+                () => (int)(Game.SelectedEntity != null
                     ? (double)Game.SelectedEntity.Cooldowns.GetValueOrDefault(KeyedAttack.QAttack, 0)
-                        / Game.SelectedEntity.QAttack.Cooldown * 100
-                    : 0);
-                })
+                        / Game.SelectedEntity.QAttack.Cooldown * 100 : 0))
             {
                 Location = Point.Empty,
                 Size = qActionButton.ClipRectangle.Size,
                 InactiveBorderWidth = 0,
-                CompletedColor = Color.FromArgb(20, Color.Gray),
+                CompletedColor = barColor,
             };
             actionBars[KeyedAttack.QAttack] = qActionBar;
             qActionButton.AddChild(qActionBar);
@@ -154,10 +161,10 @@ namespace Game
             };
             label = new CustomDrawableLabel(this)
             {
-                Location = new Point(ButtonSize-35, 15),
+                Location = new Point(ButtonSize - 35, 15),
                 Text = "E",
                 TextColor = textColor,
-                Font = new Font(Font.FontFamily, 18),
+                Font = MainFont,
                 Size = new Size(qActionButton.ClipRectangle.Width - 5, qActionButton.ClipRectangle.Height - 2),
             };
             eActionButton.AddChild(label);
@@ -173,33 +180,20 @@ namespace Game
             actionButtons[KeyedAttack.EAttack] = eActionButton;
             var eActionBar = new ProgressBar(this,
                 0, 100,
-                () =>
-                {
-                    return (int)(Game.SelectedEntity != null
+                () => (int)(Game.SelectedEntity != null
                     ? (double)Game.SelectedEntity.Cooldowns.GetValueOrDefault(KeyedAttack.EAttack, 0)
                         / Game.SelectedEntity.EAttack.Cooldown * 100
-                    : 0);
-                })
+                    : 0))
             {
                 Location = Point.Empty,
                 Size = qActionButton.ClipRectangle.Size,
                 InactiveBorderWidth = 0,
-                CompletedColor = Color.FromArgb(20, Color.Gray),
+                CompletedColor = barColor,
             };
             eActionButton.AddChild(eActionBar);
             actionBars[KeyedAttack.EAttack] = eActionBar;
             hudContainer.AddChild(eActionButton);
-            #endregion
-            #region Item Collect Button Creation
-            //collectItemButton = new CustomDrawableComponent(this)
-            //{
-            //    TextBrush = textColor,
-            //    Image = Properties.Resources.icon_placeholder,
-            //    Size = new Size(ButtonSize, ButtonSize),
-            //    Location = new Point(ClientSize.Width-ButtonSize-5, ClientSize.Height / 2 - (ButtonSize / 2)),
-            //    InactiveBorderWidth = 10,
-            //};
-            #endregion
+            #endregion           
             #endregion
             mainGameView = new ScaledViewPanel(this, Game, Controller);
             Timer.Interval = 1000 / 120;
@@ -209,7 +203,8 @@ namespace Game
 
         private void TimerTick(object sender, EventArgs e)
         {
-            Text = $"LogicalLocation: {mainGameView.MouseLogicalPos}, StepActionsLeft: {Game.PlayerScheduler.MaxActionCount - Game.PlayerScheduler.ActionCount}";
+            var logicalMouse = mainGameView.MouseLogicalPos;
+            Text = $"LogicalLocation: {MousePosition}, StepActionsLeft: {Game.PlayerScheduler.MaxActionCount - Game.PlayerScheduler.ActionCount}";
 
             foreach (var button in actionButtons)
             {
@@ -228,6 +223,20 @@ namespace Game
                     b.Deselect();
                 b.Enabled = Game.IsAccessible && ent.IsAlive;
             }
+            if (Game.CurrentLevel.InBounds(logicalMouse))
+            {
+                var obj = Game.CurrentLevel[logicalMouse].GameObjects.FirstOrDefault(x => x is Entity || x is CollectableGameObject);
+                if (obj != null)
+                {
+                    tooltip.Location = MousePosition;
+                    tooltip.Visible = true;
+                    tooltip.TitleText = obj.Name;
+                    tooltip.DescriptionText = obj.Description;
+                    tooltip.IconImage = obj.Sprite;
+                }
+                else
+                    tooltip.Visible = false;
+            }
             Invalidate(true);
         }
 
@@ -242,6 +251,12 @@ namespace Game
         {
             base.OnKeyDown(e);
             Controller.HandleKeyPress(e.KeyCode);
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            MousePosition = e.Location;
         }
 
         protected override void OnMouseClick(MouseEventArgs e) => ClickPerformed?.Invoke(this, new CustomMouseEventArg(e));

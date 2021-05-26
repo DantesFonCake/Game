@@ -121,6 +121,9 @@
   <data name="boots" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\textures\boots.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="closed_gate" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\closed_gate.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="grass_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\textures\grass_1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -156,6 +159,9 @@
   </data>
   <data name="Naru_Front_FaceOnly" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\textures\naru_front_faceonly.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="opened_gate" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\textures\opened_gate.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="sharpening_stone" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\textures\sharpening_stone.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

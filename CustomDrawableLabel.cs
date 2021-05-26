@@ -12,38 +12,16 @@ namespace Game
             TextColor = Color.Black;
         }
 
-        public Color TextColor 
-        {
-            get => color;
-            set
-            {
-                color = value;
-                textBrush = new SolidBrush(color);
-            }
-        }
+        public Color TextColor { get; set; }
         public string Text;
-        public Font Font
-        {
-            get => font;
-            set
-            {
-                font = value;
-                fontSizePecent = (float)font.SizeInPoints / ParentSize.Width;
-            }
-        }
-        float fontSizePecent;
-        private Font font;
-        private Color color;
-        private Brush textBrush;
+        public Font Font { get; set; }
 
         public override void Draw(Graphics g)
         {
             base.Draw(g);
             if (!Visible)
                 return;
-            var textSize = new SizeF(Text.Length * Font.SizeInPoints, Font.SizeInPoints);
-            var textLocation = Location;//new Point(Location); //+ Size.Truncate(textSize / 2));
-            g.DrawString(Text, Font, textBrush, textLocation);
+            g.DrawString(Text, Font, new SolidBrush(TextColor), new RectangleF(Location,Size));
         }
     }
 }

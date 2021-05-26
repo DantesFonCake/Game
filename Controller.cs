@@ -46,7 +46,7 @@ namespace Game.Model
                         Game.SelectAttack(KeyedAttack.QAttack);
                         break;
                     case Keys.F:
-                        if (Game.HasCollectable)
+                        if (Game.HaveCollectable)
                         {
                             var items = Game.Snake.Heroes
                                 .Where(x => x.IsAlive)

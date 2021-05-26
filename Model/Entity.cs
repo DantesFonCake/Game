@@ -7,9 +7,7 @@ namespace Game.Model
 {
     public abstract class Entity : GameObject, IMoveable, IAttacker
     {
-
         public bool IsPlayerControlled { get; protected set; }
-
 
         public Entity(GameModel game, int x, int y, int health = 100, Dictionary<AttackType, int> resistances = null) : this(game, new Point(x, y), health, resistances)
         {
@@ -75,7 +73,7 @@ namespace Game.Model
 
         #region Attack
         public event EventHandler<AttackEventArgs> Attacked;
-        public Attack Attack{ get; protected set; }
+        public Attack Attack { get; protected set; }
         public virtual void AttackPosition(Point position, Direction attackDirection = Direction.None)
         {
             if (Attack != null)
@@ -102,7 +100,6 @@ namespace Game.Model
             return image;
         }
 
-        
         public IEnumerable<Point> GetPossibleAttackPositions(Level level, Point position)
             => Attack != null ? level.GetAccesibleTiles(position, Attack.Range, false, x => !x.IsSeeThrough) : Enumerable.Empty<Point>();
 

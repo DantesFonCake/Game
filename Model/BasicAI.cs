@@ -12,6 +12,7 @@ namespace Game.Model
         private Dictionary<BasicEnemy, IEnumerable<Point>> lastSeenPositions = new Dictionary<BasicEnemy, IEnumerable<Point>>();
 
         public IReadOnlyList<BasicEnemy> AIControlled => aiControlled;
+        public bool AnyAlive => aiControlled.Any(x => x.IsAlive);
 
         public BasicAI(GameModel game, List<BasicEnemy> aiControlled)
         {
@@ -25,7 +26,10 @@ namespace Game.Model
             {
                 foreach (var enemy in aiControlled)
                 {
-                    var seenPositions = Game.Snake.Heroes.Where(x => x.IsAlive).Select(x => x.Position).Intersect(enemy.VisionField);
+                    if (enemy.VisionFieldTask == null)
+                        enemy.StartVisionFieldCalculation(Game.CurrentLevel);
+                    enemy.VisionFieldTask.Wait();
+                    var seenPositions = Game.Snake.Heroes.Where(x => x.IsAlive).Select(x => x.Position).Intersect(enemy.VisionFieldTask.Result);
                     if (seenPositions.Any())
                         lastSeenPositions[enemy] = seenPositions;
                     if (!TryScheduleAttack(Game.CurrentLevel, enemy, seenPositions))
@@ -38,9 +42,7 @@ namespace Game.Model
             }
             var enemiesLeft = false;
             foreach (var enemy in aiControlled)
-            {
                 enemiesLeft |= enemy.Scheduler.Commit();
-            }
             EnemyStepScheduled = enemiesLeft;
             return enemiesLeft;
         }
@@ -51,7 +53,7 @@ namespace Game.Model
             lastSeenPositions = new Dictionary<BasicEnemy, IEnumerable<Point>>();
         }
 
-        private void ScheduleTowards(Level level, BasicEnemy enemy, IEnumerable<Point> positions)
+        public void ScheduleTowards(Level level, BasicEnemy enemy, IEnumerable<Point> positions)
         {
             var bestMove = enemy.MovePossibilities
               .Select(x => enemy.Position + x)
@@ -61,7 +63,7 @@ namespace Game.Model
             enemy.Scheduler.AddMovement(enemy.Move, (new Size(bestMove) - new Size(enemy.Position)).GetDirectionFromOffset());
         }
 
-        private bool TryScheduleAttack(Level level, BasicEnemy enemy, IEnumerable<Point> targets)
+        public bool TryScheduleAttack(Level level, BasicEnemy enemy, IEnumerable<Point> targets)
         {
             var rotations = new[] { Direction.Right, Direction.Up, Direction.Left, Direction.Down };
             var possibleAttackPositions = enemy.GetPossibleAttackPositions(level, enemy.Position).Where(x => level.InBounds(x) && level[x].IsPassable).OrderBy(x => x.DistanceTo(enemy.Position));

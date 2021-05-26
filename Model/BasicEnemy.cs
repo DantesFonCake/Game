@@ -10,7 +10,7 @@ namespace Game.Model
         public override BasicDrawer Drawer { get; protected set; }
 
         public override Bitmap Sprite => Properties.Resources.skull;
-        public HashSet<Point> VisionField;
+        public Task<HashSet<Point>> VisionFieldTask { get; protected set; }
         public Size[] MovePossibilities;
         public Scheduler Scheduler;
 
@@ -20,13 +20,13 @@ namespace Game.Model
             MovePossibilities = new[] { new Size(1, 0), new Size(0, 1), new Size(-1, 0), new Size(0, -1), new Size(0, 0) };
             Drawer = new BasicDrawer(Sprite, CollectImage);
             Scheduler = new Scheduler();
+            Name = "Skully";
+            Description = "A lonely creepy skeleton";
         }
 
         public BasicEnemy(GameModel game, int x, int y) : this(game, new Point(x, y)) { }
 
-        public async void StartVisionFieldCalculation(Level level)
-        {
-            VisionField = await Task.Run(() => RecalculateVisionField(level).ToHashSet());
-        }
+        public void StartVisionFieldCalculation(Level level) 
+            => VisionFieldTask = Task.Run(() => RecalculateVisionField(level).ToHashSet());
     }
 }

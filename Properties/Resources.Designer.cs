@@ -73,6 +73,16 @@ namespace Game.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap closed_gate {
+            get {
+                object obj = ResourceManager.GetObject("closed_gate", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap grass_1 {
             get {
                 object obj = ResourceManager.GetObject("grass_1", resourceCulture);
@@ -186,6 +196,16 @@ namespace Game.Properties {
         internal static System.Drawing.Bitmap Naru_Front_FaceOnly {
             get {
                 object obj = ResourceManager.GetObject("Naru_Front_FaceOnly", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap opened_gate {
+            get {
+                object obj = ResourceManager.GetObject("opened_gate", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

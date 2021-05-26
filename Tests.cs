@@ -1,12 +1,25 @@
 ﻿using Game.Model;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 
 namespace Game
 {
+    internal class TestEnemy : BasicEnemy
+    {
+        public TestEnemy(GameModel game, Point position) : base(game, position)
+        {
+            Attack = new Attack(new[] { new Size(1, 0), new Size(0, 1), new Size(-1, 0), new Size(0, -1) }, AttackType.Physical, 50, 1, false);
+            MovePossibilities = new[] { new Size(1, 0), new Size(0, 1), new Size(-1, 0), new Size(0, -1), new Size(0, 0) };
+        }
+
+        public TestEnemy(GameModel game, int x, int y) : this(game, new Point(x, y))
+        {
+        }
+    }
     internal class TestEntity : Entity
     {
         public override BasicDrawer Drawer { get; protected set; } = null;
@@ -94,7 +107,7 @@ namespace Game
             }
             line.Remove(line.Length - 1, 1);
             level[y] = line.ToString();
-            var l = LevelCreator.FromLines(null, level, out var snake, out var enemies);
+            var l = LevelCreator.FromLines(null, level, out var enemies, out Snake snake);
             Assert.IsTrue(l.InBounds(x, y) && l[x, y].GameObjects.Length > 0);
         }
     }
@@ -217,7 +230,7 @@ namespace Game
         public void CreateAll()
         {
             Entity = new TestEntity(0, 0);
-            Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Fire, 10, 1, false));
+            Entity.SetAttack(new Attack(new[] { new Size(1, 0) }, AttackType.Fire, 10, 1, true));
             Level = LevelCreator.OfSize(null, new Size(3, 3));
             Level.PlaceObject(Entity);
         }
@@ -275,7 +288,7 @@ namespace Game
             var initialHealth = entity1.Health;
             Level.PlaceObject(entity1);
             Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Right);
-            Entity.Scheduler.AddAttack(Entity, Entity.Position + Direction.Right.GetOffsetFromDirection());
+            Entity.Scheduler.AddAttack(Entity, Entity.Position + Direction.Right.GetOffsetFromDirection(), Direction.Right);
             Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Down);
             Entity.Scheduler.AddMovement(x => Entity.Move(x), Direction.Right);
             Entity.Scheduler.Commit();
@@ -285,6 +298,69 @@ namespace Game
             initialHealth = entity1.Health;
             while (Entity.Scheduler.Commit()) ;
             Assert.IsTrue(new Point(2, 1) == Entity.Position && entity1.Health == initialHealth);
+        }
+    }
+
+    public class AITests
+    {
+        GameModel game;
+        Level level;
+        BasicAI ai;
+        TestEnemy testEnemy;
+
+        [SetUp]
+        public void SetUp()
+        {
+            game = new GameModel(levelLines);
+            level = game.CurrentLevel;
+            testEnemy = new TestEnemy(game, Point.Empty);
+            level.PlaceObject(testEnemy);
+            ai = new BasicAI(game, new List<BasicEnemy> { testEnemy });
+        }
+
+        private static readonly string[] levelLines = new[]
+        {
+            " ; ; ; ",
+            " ; ; ; ",
+            " ; ; ; "
+        };
+
+        [Test]
+        public void Test_CorrectlyMovesToPosition()
+        {
+            var targets = new[] { new Point(1, 1) };
+            for (var i = 0; i < 2; i++)
+            {
+                ai.ScheduleTowards(level, testEnemy, targets);
+                testEnemy.Scheduler.Commit();
+            }
+            Assert.AreEqual(targets[0], testEnemy.Position);
+        }
+
+        [Test]
+        public void Test_CorrectlyAttacks()
+        {
+            var enemy1 = new TestEntity(3, 2);
+            var initialHealth = enemy1.Health;
+            level.PlaceObject(enemy1);
+            ai.TryScheduleAttack(level, testEnemy, new[] { enemy1.Position });
+            while (testEnemy.Scheduler.Commit()) ;
+            Assert.IsTrue(enemy1.Health < initialHealth);
+        }
+
+        [Test]
+        public void Test_CorrectlyDoesMixedActions()
+        {
+            var initialPosition = testEnemy.Position;
+            var enemy1 = new TestEntity(2, 1);
+            var initialHealth = enemy1.Health;
+            level.PlaceObject(enemy1);
+            var enemyPosition = new[] { enemy1.Position };
+            while (!ai.TryScheduleAttack(level, testEnemy, enemyPosition))
+                ai.ScheduleTowards(level, testEnemy, enemyPosition);
+            while (testEnemy.Scheduler.Commit()) ;
+            Assert.AreNotEqual(initialPosition, testEnemy.Position);
+            Assert.IsTrue(enemy1.Health < initialHealth);
         }
     }
 }

@@ -9,6 +9,7 @@ namespace Game.Model
         {
             Drawer = new BasicDrawer(Sprite, CollectImage,Color.Blue);
             Name = "Hiro";
+            Description = "Calm Archer. All attack are Physical";
             var pattern = new[] { new Size(-1, -1), new Size(0, 0), new Size(1, -1), new Size(1, 1), new Size(-1, 1) };
             EAttack = new Attack(pattern, AttackType.Physical, 10, 6,true, 2);
             pattern = new[] { new Size(0, 0) };

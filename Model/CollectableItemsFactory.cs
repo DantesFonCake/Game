@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 
 namespace Game.Model
 {
@@ -49,7 +48,7 @@ namespace Game.Model
         {
             [ItemTypes.Boots] = HermesBoots,
             [ItemTypes.SharpeningStone] = SharpeningStone,
-            [ItemTypes.Shield]=NkhShield,
+            [ItemTypes.Shield] = NkhShield,
         };
     }
 }

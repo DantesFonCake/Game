@@ -13,6 +13,7 @@ namespace Game.Model
         public event EventHandler Removed;
 
         public string Name { get; protected set; } = "";
+        public string Description { get; protected set; } = "";
         public bool IsSeeThrough { get; protected set; } = true;
         public Direction Direction { get; protected set; } = Direction.Down;
         public Point Position { get; set; }
