@@ -9,7 +9,7 @@ namespace Game
         public readonly Color SpecificColor;
         public ViewConstructor ConstructorView;
 
-        public BasicDrawer(Bitmap sprite, ViewConstructor constructor, Color? objectSpecificColor=null)
+        public BasicDrawer(Bitmap sprite, ViewConstructor constructor, Color? objectSpecificColor = null)
         {
             Sprite = sprite;
             ConstructorView = constructor;

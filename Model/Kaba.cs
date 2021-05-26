@@ -4,7 +4,7 @@ namespace Game.Model
 {
     public class Kaba : PlayerControlledEntity
     {
-        public Kaba(GameModel game, Point position) : base(game, position, 150 , null)
+        public Kaba(GameModel game, Point position) : base(game, position, 150, null)
         {
             Drawer = new BasicDrawer(
                 Sprite,

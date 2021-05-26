@@ -12,7 +12,7 @@ namespace Game.Model
 
         public virtual void AddMovement(Action<Direction> movement, Direction direction) => Actions.AddLast(new StepAction(null, () => movement(direction), ActionType.Move));
 
-        public virtual void AddAttack(Entity entity, Point position,Direction direction=Direction.None, Point? initialPosition = null)
+        public virtual void AddAttack(Entity entity, Point position, Direction direction = Direction.None, Point? initialPosition = null)
         {
             if (entity.Attack != null)
             {
@@ -20,7 +20,7 @@ namespace Game.Model
                     initialPosition = entity.Position;
                 if (!entity.Attack.IsRanged)
                     Actions.AddLast(new StepAction(entity, () => entity.MoveTo(position), ActionType.NotPreviewable));
-                Actions.AddLast(new StepAction(entity, () => entity.AttackPosition(position,direction), ActionType.Attack));
+                Actions.AddLast(new StepAction(entity, () => entity.AttackPosition(position, direction), ActionType.Attack));
                 if (!entity.Attack.IsRanged)
                     Actions.AddLast(new StepAction(entity, () => entity.MoveTo(initialPosition.Value), ActionType.NotPreviewable));
             }

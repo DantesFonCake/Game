@@ -26,7 +26,7 @@ namespace Game.Model
 
         public BasicEnemy(GameModel game, int x, int y) : this(game, new Point(x, y)) { }
 
-        public void StartVisionFieldCalculation(Level level) 
+        public void StartVisionFieldCalculation(Level level)
             => VisionFieldTask = Task.Run(() => RecalculateVisionField(level).ToHashSet());
     }
 }

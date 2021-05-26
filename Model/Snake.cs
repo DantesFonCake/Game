@@ -8,8 +8,6 @@ namespace Game.Model
     {
         public GameModel Game;
 
-        public event EventHandler Removed;
-
         public Kaba Kaba { get; private set; }
         public Hiro Hiro { get; private set; }
         public Hana Hana { get; private set; }

@@ -8,7 +8,7 @@ namespace Game.Model
         public readonly Action Action;
         public readonly ActionType ActionType;
 
-        public StepAction(Entity target,Action action, ActionType actionType)
+        public StepAction(Entity target, Action action, ActionType actionType)
         {
             Target = target;
             Action = action;

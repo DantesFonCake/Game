@@ -10,7 +10,7 @@ namespace Game.Model
     public class Level : IEnumerable<Tile>
     {
         public Tile[] Map;
-        HashSet<Exit> exits = new HashSet<Exit>();
+        private readonly HashSet<Exit> exits = new HashSet<Exit>();
         public int XSize { get; private set; }
         public int YSize { get; private set; }
         public Tile this[int x, int y]
@@ -102,7 +102,7 @@ namespace Game.Model
                 this[entity.Position].AddObject(entity);
                 if (Game == null || Game.Snake == null)
                     return;
-                if (exits.Select(x=>x.Position).Contains(Game.Snake.Position))
+                if (exits.Select(x => x.Position).Contains(Game.Snake.Position))
                 {
                     Game.MoveToNextLevel();
                     return;

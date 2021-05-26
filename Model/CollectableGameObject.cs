@@ -13,7 +13,7 @@ namespace Game.Model
             this.sprite = sprite;
             Description = description;
             Name = name;
-            this.Action = action;
+            Action = action;
             Drawer = new BasicDrawer(sprite, CollectImage);
         }
 

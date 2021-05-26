@@ -165,19 +165,21 @@ namespace Game.Model
         }
 
 
-        private void MoveToNextLevel(string[] lines)
+        public void MoveToNextLevel(string[] lines)
         {
+            IsAccessible = false;
+            ReadyToAttack = false;
             Timer.Stop();
             var level = LevelCreator.FromLines(this, lines, out var aiControlled, out Tuple<Point, Point, Point, Point> snakePositions);
             AI.ReplaceControlled(aiControlled);
             CurrentLevel = level;
-            IsAccessible = true;
+            if (Snake != null && snakePositions != null)
+            {
+                Snake.PlaceItself(level, snakePositions);
+                level.RecalculateVisionField(Snake.GetVisionField(level));
+            }
             IsPlayerStep = true;
-            ReadyToAttack = false;
-            if (Snake == null || snakePositions == null)
-                return;
-            Snake.PlaceItself(level, snakePositions);
-            level.RecalculateVisionField(Snake.GetVisionField(level));
+            IsAccessible = true;
         }
 
         public void MoveToNextLevel()
@@ -213,7 +215,10 @@ namespace Game.Model
                     var s = PlayerScheduler.Ghosts.Keys.FirstOrDefault(x => x.Position == point);
                     var entity = s != null
                         ? s.Entity
-                        : CurrentLevel[point].GameObjects.Where(x => x is PlayerControlledEntity).Select(x => x as PlayerControlledEntity).FirstOrDefault();
+                        : CurrentLevel[point].GameObjects
+                            .Where(x => x is PlayerControlledEntity)
+                            .Select(x => x as PlayerControlledEntity)
+                            .FirstOrDefault();
                     SelectEntity(entity);
                 }
         }

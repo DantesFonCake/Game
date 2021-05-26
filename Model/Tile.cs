@@ -12,6 +12,7 @@ namespace Game.Model
             Properties.Resources.grass_2,
             Properties.Resources.grass_3
         };
+
         public Point Position { get; set; }
         public int X
         {
@@ -30,7 +31,7 @@ namespace Game.Model
         public Level Level;
         private static Bitmap unknownTile;
         public GameObject[] GameObjects => gameObjects.ToArray();
-        private List<GameObject> gameObjects=new List<GameObject>(3);
+        private readonly List<GameObject> gameObjects = new List<GameObject>(3);
 
         public BasicDrawer Drawer { get; protected set; }
 
@@ -71,25 +72,23 @@ namespace Game.Model
             var mainImage = new Bitmap(drawer.Sprite);
             using (var g = Graphics.FromImage(mainImage))
             {
-                    foreach (var gameObject in GameObjects)
+                foreach (var gameObject in GameObjects)
+                {
+                    if (gameObject is Entity entity)
                     {
-                        if (gameObject is Entity entity)
+                        if (IsVisible)
                         {
-                            if (IsVisible)
-                            {
-                                g.DrawImage(entity.Drawer.GetView(), new Rectangle(Point.Empty, mainImage.Size));
-                            }
+                            g.DrawImage(entity.Drawer.GetView(), new Rectangle(Point.Empty, mainImage.Size));
                         }
-                        else
-                            g.DrawImage(gameObject.Drawer.GetView(), new Rectangle(Point.Empty, mainImage.Size));
                     }
+                    else
+                        g.DrawImage(gameObject.Drawer.GetView(), new Rectangle(Point.Empty, mainImage.Size));
+                }
                 if (!IsVisible)
                     g.FillRectangle(new SolidBrush(Color.FromArgb(96, Color.Black)), new Rectangle(Point.Empty, mainImage.Size));
             }
 
             return mainImage;
         }
-
-        //public void ClearTile() => GameObjects = new List<GameObject>();
     }
 }

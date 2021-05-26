@@ -12,8 +12,6 @@ namespace Game.Model
         public IReadOnlyDictionary<KeyedAttack, int> Cooldowns => cooldowns.ToDictionary(x => x.Key, x => x.Value);
 
         private readonly Dictionary<KeyedAttack, int> cooldowns = new Dictionary<KeyedAttack, int>();
-        public bool CanQAttack => Cooldowns.GetValueOrDefault(KeyedAttack.QAttack, 0) <= 0;
-        public bool CanEAttack => Cooldowns.GetValueOrDefault(KeyedAttack.EAttack, 0) <= 0;
         private KeyedAttack selectedAttack = KeyedAttack.None;
         public void SelectAttack(KeyedAttack attack)
         {
@@ -22,6 +20,7 @@ namespace Game.Model
             {
                 KeyedAttack.EAttack => EAttack,
                 KeyedAttack.QAttack => QAttack,
+                _=>null,
             };
         }
 

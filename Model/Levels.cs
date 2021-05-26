@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Game.Model
 {
@@ -15,8 +13,8 @@ namespace Game.Model
                 yield return Level2;
             }
         }
-        public static string[] Level1 = new[] 
-        { 
+        public static string[] Level1 = new[]
+        {
             "S;S;S;S;S;S;S;S;S;S;S;S;S;S;S",
             "S; ; ;Ka;Hi;Ha;Na;S; ;S; ; ; ; ;S",
             "S; ; ; ; ; ; ;S; ; ; ; ; ; ;Ex",

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
+﻿using System.Drawing;
 
 namespace Game.Model
 {
@@ -17,22 +14,16 @@ namespace Game.Model
             CollectImage(entity);
         }
 
-        private void CollectImage(PlayerControlledEntity entity)
-        {           
-            Sprite = entity.Sprite.SetOpacity(96);
-        }
+        private void CollectImage(PlayerControlledEntity entity) => Sprite = entity.Sprite.SetOpacity(96);
 
-        public void Move(Direction direction)
-        {
-            Position += direction.GetOffsetFromDirection();
-        }
+        public void Move(Direction direction) => Position += direction.GetOffsetFromDirection();
 
-        public void Rebound(PlayerControlledEntity entity) 
+        public void Rebound(PlayerControlledEntity entity)
         {
             Entity = entity;
             Rebound();
             CollectImage(entity);
         }
-        public void Rebound()=> Position = Entity.Position;
+        public void Rebound() => Position = Entity.Position;
     }
 }

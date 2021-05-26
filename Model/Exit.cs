@@ -11,8 +11,7 @@ namespace Game.Model
         }
 
         public Exit(GameModel game, int x, int y) : this(game, new Point(x, y))
-        {
-        }
+        { }
 
         public void Open() => IsRigid = false;
 

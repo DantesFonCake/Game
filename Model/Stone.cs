@@ -15,7 +15,7 @@ namespace Game.Model
 
         public override Bitmap Sprite { get; }
 
-        public Stone(GameModel game, int x, int y) : base(game,x, y)
+        public Stone(GameModel game, int x, int y) : base(game, x, y)
         {
             IsSeeThrough = false;
             var variationRandomizer = Utils.GetRandomInt();

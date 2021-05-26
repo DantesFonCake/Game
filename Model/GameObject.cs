@@ -59,10 +59,7 @@ namespace Game.Model
             Game = game;
         }
 
-        public virtual void Remove()
-        {
-            Removed?.Invoke(this, EventArgs.Empty);
-        }
+        public virtual void Remove() => Removed?.Invoke(this, EventArgs.Empty);
 
         public abstract BasicDrawer Drawer { get; protected set; }
         public abstract Bitmap Sprite { get; }

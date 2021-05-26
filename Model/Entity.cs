@@ -9,11 +9,12 @@ namespace Game.Model
     {
         public bool IsPlayerControlled { get; protected set; }
 
-        public Entity(GameModel game, int x, int y, int health = 100, Dictionary<AttackType, int> resistances = null) : this(game, new Point(x, y), health, resistances)
-        {
-        }
+        public Entity(GameModel game, int x, int y, int health = 100, Dictionary<AttackType, int> resistances = null) 
+            : this(game, new Point(x, y), health, resistances)
+        { }
 
-        public Entity(GameModel game, Point position, int health = 100, Dictionary<AttackType, int> resistances = null) : base(game, position)
+        public Entity(GameModel game, Point position, int health = 100, Dictionary<AttackType, int> resistances = null) 
+            : base(game, position)
         {
             this.resistances = resistances ?? new Dictionary<AttackType, int>();
             Health = health;

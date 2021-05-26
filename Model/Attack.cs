@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
@@ -14,7 +13,7 @@ namespace Game
         public readonly bool IsRanged;
         public readonly int Cooldown;
 
-        public Attack(Size[] pattern, AttackType type, int damage,int range,bool isRanged,int cooldown=0)
+        public Attack(Size[] pattern, AttackType type, int damage, int range, bool isRanged, int cooldown = 0)
         {
             this.pattern = pattern;
             Type = type;
@@ -27,6 +26,7 @@ namespace Game
         public IEnumerable<Point> GetPositions(Point position, Direction direction) => pattern.Select(x => position + x).RotatePoints(direction, position);
 
         public IEnumerable<Point> GetPositions(Point position, double angle) => pattern.Select(x => position + x).RotatePoints(angle, position);
+
         public bool ChangeDamage(int d)
         {
             var previous = Damage;
