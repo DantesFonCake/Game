@@ -34,16 +34,14 @@ namespace Game.Model
         }
         public bool IsAccessible { get; private set; } = true;
 
-
-        public List<Action> ScheduledPath = new List<Action>();
-        public PlayerScheduler PlayerScheduler;
-        public Snake Snake;
+        public PlayerScheduler PlayerScheduler { get; protected set; }
+        public Snake Snake { get; protected set; }
 
         private bool readyToAttack;
         private bool IsStepInWork = false;
         private readonly Timer Timer = new Timer();
 
-        public GameModel(bool initialize = false)
+        public GameModel(bool initialize = true)
         {
             Timer.Interval = 1000 / 2.4;
             Timer.Elapsed += GameModelActionTimer_Tick;
@@ -61,6 +59,7 @@ namespace Game.Model
         private void Initialize(string[] levelLines)
         {
             var level = LevelCreator.FromLines(this, levelLines, out var aiControlled, out Snake snake);
+            AI.ReplaceControlled(aiControlled);
             CurrentLevel = level;
             if (snake == null)
                 return;
@@ -70,7 +69,7 @@ namespace Game.Model
             level.RecalculateVisionField(Snake.GetVisionField(level));
         }
 
-        public GameModel(string[] levelLines) : this() => Initialize(levelLines);
+        public GameModel(string[] levelLines) : this(false) => Initialize(levelLines);
 
 
         private void GameModelActionTimer_Tick(object sender, ElapsedEventArgs e)
@@ -169,12 +168,14 @@ namespace Game.Model
         {
             IsAccessible = false;
             ReadyToAttack = false;
+            var actionCount = PlayerScheduler.MaxActionCount;
             Timer.Stop();
             var level = LevelCreator.FromLines(this, lines, out var aiControlled, out Tuple<Point, Point, Point, Point> snakePositions);
             AI.ReplaceControlled(aiControlled);
             CurrentLevel = level;
             if (Snake != null && snakePositions != null)
             {
+                PlayerScheduler = new PlayerScheduler(Snake,actionCount);
                 Snake.PlaceItself(level, snakePositions);
                 level.RecalculateVisionField(Snake.GetVisionField(level));
             }

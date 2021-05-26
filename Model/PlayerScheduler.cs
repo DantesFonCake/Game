@@ -6,14 +6,14 @@ namespace Game.Model
 {
     public class PlayerScheduler : Scheduler
     {
-        public int MaxActionCount { get; protected set; } = 5;
+        public int MaxActionCount { get; protected set; }
         public int ActionCount { get; protected set; }
         public readonly LinkedList<Point> PathPreview = new LinkedList<Point>();
         public Dictionary<Ghost, LinkedList<Point>> Ghosts = new Dictionary<Ghost, LinkedList<Point>>();
         public Dictionary<PlayerControlledEntity, LinkedList<IEnumerable<Point>>> AttackPreview =
             new Dictionary<PlayerControlledEntity, LinkedList<IEnumerable<Point>>>();
         public Point LastPosition => PathPreview.Last.Value;
-        public PlayerScheduler(Snake snake) : base()
+        public PlayerScheduler(Snake snake,int maxActionCount=5) : base()
         {
             foreach (var t in snake.Heroes)
             {
@@ -22,6 +22,7 @@ namespace Game.Model
                 AttackPreview[t] = new LinkedList<IEnumerable<Point>>();
             }
             PathPreview.AddLast(snake.Position);
+            MaxActionCount = maxActionCount;
         }
 
         public bool ChangeMaxActionCount(int d)

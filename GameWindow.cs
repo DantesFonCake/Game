@@ -26,7 +26,7 @@ namespace Game
         public GameWindow()
         {
             Dock = DockStyle.Fill;
-            Game = new GameModel(Levels.Level1);
+            Game = new GameModel();
             Controller = new Controller(Game);
             Timer = new Timer();
 

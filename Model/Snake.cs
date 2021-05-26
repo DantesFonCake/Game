@@ -71,7 +71,10 @@ namespace Game.Model
             level.PlaceObject(Hiro);
             level.PlaceObject(Hana);
             level.PlaceObject(Naru);
-
+            foreach (var hero in Heroes)
+            {
+                hero.Ghost.Position = hero.Position;
+            }
         }
 
         public void PlaceItself(Level level, Point positionForHead)
