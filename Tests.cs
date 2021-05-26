@@ -12,8 +12,8 @@ namespace Game
     {
         public TestEnemy(GameModel game, Point position) : base(game, position)
         {
-            Attack = new Attack(new[] { new Size(1, 0), new Size(0, 1), new Size(-1, 0), new Size(0, -1) }, AttackType.Physical, 50, 1, false);
-            MovePossibilities = new[] { new Size(1, 0), new Size(0, 1), new Size(-1, 0), new Size(0, -1), new Size(0, 0) };
+            Attack = new Attack(new[] { new Size(1, 0), new Size(0, 1), new Size(-1, 0), new Size(0, -1) }, AttackType.Physical, 50, 2, false);
+            movePossibilities = new[] { new Size(1, 0), new Size(0, 1), new Size(-1, 0), new Size(0, -1), new Size(0, 0) };
         }
 
         public TestEnemy(GameModel game, int x, int y) : this(game, new Point(x, y))
@@ -303,32 +303,32 @@ namespace Game
 
     public class AITests
     {
-        GameModel game;
-        Level level;
-        BasicAI ai;
-        TestEnemy testEnemy;
+        private GameModel game;
+        private Level level;
+        private BasicAI ai;
+        private TestEnemy testEnemy;
 
         [SetUp]
         public void SetUp()
         {
             game = new GameModel(levelLines);
             level = game.CurrentLevel;
-            testEnemy = new TestEnemy(game, Point.Empty);
+            testEnemy = new TestEnemy(game, new Point(1,1));
             level.PlaceObject(testEnemy);
             ai = new BasicAI(game, new List<BasicEnemy> { testEnemy });
         }
 
         private static readonly string[] levelLines = new[]
         {
-            " ; ; ; ",
-            " ; ; ; ",
-            " ; ; ; "
+            " ; ; ; ; ",
+            " ; ; ; ;",
+            " ; ; ; ; "
         };
 
         [Test]
         public void Test_CorrectlyMovesToPosition()
         {
-            var targets = new[] { new Point(1, 1) };
+            var targets = new[] { new Point(2, 2) };
             for (var i = 0; i < 2; i++)
             {
                 ai.ScheduleTowards(level, testEnemy, targets);
@@ -340,7 +340,7 @@ namespace Game
         [Test]
         public void Test_CorrectlyAttacks()
         {
-            var enemy1 = new TestEntity(3, 2);
+            var enemy1 = new TestEntity(1, 0);
             var initialHealth = enemy1.Health;
             level.PlaceObject(enemy1);
             ai.TryScheduleAttack(level, testEnemy, new[] { enemy1.Position });
@@ -352,12 +352,15 @@ namespace Game
         public void Test_CorrectlyDoesMixedActions()
         {
             var initialPosition = testEnemy.Position;
-            var enemy1 = new TestEntity(2, 1);
+            var enemy1 = new TestEntity(4, 2);
             var initialHealth = enemy1.Health;
             level.PlaceObject(enemy1);
             var enemyPosition = new[] { enemy1.Position };
             while (!ai.TryScheduleAttack(level, testEnemy, enemyPosition))
+            {
                 ai.ScheduleTowards(level, testEnemy, enemyPosition);
+                while (testEnemy.Scheduler.Commit()) ;
+            }
             while (testEnemy.Scheduler.Commit()) ;
             Assert.AreNotEqual(initialPosition, testEnemy.Position);
             Assert.IsTrue(enemy1.Health < initialHealth);

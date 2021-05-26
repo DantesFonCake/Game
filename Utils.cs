@@ -32,6 +32,7 @@ namespace Game
         public static Direction Copy(this Direction en) => (Direction)(int)en;
 
         public static Direction GetDirectionFromOffset(this Size offset) => GetDirectionFromOffset(offset.Width, offset.Height);
+
         public static Direction ToDirection(this Keys keyCode)
             => keyCode switch
             {
@@ -120,33 +121,6 @@ namespace Game
 
         public static double DistanceTo(this Point point1, Point point2)
             => Math.Sqrt((point2.X - point1.X) * (point2.X - point1.X) + (point2.Y - point1.Y) * (point2.Y - point1.Y));
-
-        public static HashSet<Point> BFSForLevel(this Level level, Point start, HashSet<Point> destinations)
-        {
-            var queue = new Queue<Point>();
-            queue.Enqueue(start);
-            var track = new Dictionary<Point, SinglyLinkedList<Point>>
-            {
-                [start] = new SinglyLinkedList<Point>(start)
-            };
-            while (queue.Count != 0)
-            {
-                var node = queue.Dequeue();
-                foreach (var neighbour in GetAdjancent(node))
-                {
-
-                    if (!level.InBounds(neighbour) || !level[neighbour].IsPassable && !destinations.Contains(neighbour) || track.ContainsKey(neighbour))
-                        continue;
-                    track[neighbour] = new SinglyLinkedList<Point>(neighbour, track[node]);
-                    queue.Enqueue(neighbour);
-                    if (destinations.Contains(neighbour))
-                    {
-                        return track[neighbour].ToHashSet();
-                    }
-                }
-            }
-            return new HashSet<Point>();
-        }
 
         public static Dictionary<TValue, TKey> ToFlippedDictionary<TKey, TValue>(this IDictionary<TKey, TValue> source)
         {

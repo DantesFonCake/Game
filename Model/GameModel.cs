@@ -168,13 +168,13 @@ namespace Game.Model
         {
             IsAccessible = false;
             ReadyToAttack = false;
-            var actionCount = PlayerScheduler.MaxActionCount;
             Timer.Stop();
             var level = LevelCreator.FromLines(this, lines, out var aiControlled, out Tuple<Point, Point, Point, Point> snakePositions);
             AI.ReplaceControlled(aiControlled);
             CurrentLevel = level;
             if (Snake != null && snakePositions != null)
             {
+                var actionCount = PlayerScheduler.MaxActionCount;
                 PlayerScheduler = new PlayerScheduler(Snake,actionCount);
                 Snake.PlaceItself(level, snakePositions);
                 level.RecalculateVisionField(Snake.GetVisionField(level));

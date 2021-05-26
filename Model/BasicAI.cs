@@ -53,14 +53,15 @@ namespace Game.Model
             lastSeenPositions = new Dictionary<BasicEnemy, IEnumerable<Point>>();
         }
 
-        public void ScheduleTowards(Level level, BasicEnemy enemy, IEnumerable<Point> positions)
+        public bool ScheduleTowards(Level level, BasicEnemy enemy, IEnumerable<Point> positions)
         {
-            var bestMove = enemy.MovePossibilities
-              .Select(x => enemy.Position + x)
-              .Where(x => level.InBounds(x) && level[x].IsPassable)
-              .OrderBy(x => level.BFSForLevel(x, positions.ToHashSet()).Count)
-              .First();
-            enemy.Scheduler.AddMovement(enemy.Move, (new Size(bestMove) - new Size(enemy.Position)).GetDirectionFromOffset());
+            var bestPath = BFSForLevel(level, enemy, positions.ToHashSet());
+            if (bestPath.Count > 0)
+            {
+                enemy.Scheduler.AddMovement(enemy.Move, (new Size(bestPath[bestPath.Count-2]) - new Size(enemy.Position)).GetDirectionFromOffset());
+                return true;
+            }
+            return false;
         }
 
         public bool TryScheduleAttack(Level level, BasicEnemy enemy, IEnumerable<Point> targets)
@@ -74,6 +75,34 @@ namespace Game.Model
             var posRot = posRotPairs.First().Key;
             enemy.Scheduler.AddAttack(enemy, posRot.point, posRot.rotation);
             return true;
+        }
+
+        public static List<Point> BFSForLevel(Level level, BasicEnemy enemy, HashSet<Point> destinations)
+        {
+            var start = enemy.Position;
+            var queue = new Queue<Point>();
+            queue.Enqueue(start);
+            var track = new Dictionary<Point, SinglyLinkedList<Point>>
+            {
+                [start] = new SinglyLinkedList<Point>(start)
+            };
+            while (queue.Count != 0)
+            {
+                var node = queue.Dequeue();
+                foreach (var neighbour in enemy.MovePossibilities.Select(x=>node+x))
+                {
+
+                    if (!level.InBounds(neighbour) || !level[neighbour].IsPassable && !destinations.Contains(neighbour) || track.ContainsKey(neighbour))
+                        continue;
+                    track[neighbour] = new SinglyLinkedList<Point>(neighbour, track[node]);
+                    queue.Enqueue(neighbour);
+                    if (destinations.Contains(neighbour))
+                    {
+                        return track[neighbour].ToList();
+                    }
+                }
+            }
+            return new List<Point>();
         }
 
     }
