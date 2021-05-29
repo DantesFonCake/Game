@@ -86,7 +86,10 @@ namespace Game.Model
                 if (button == MouseButtons.Left)
                 {
                     if (!Game.ReadyToAttack)
+                    {
                         Game.SelectEntity(logicalPosition);
+                        Direction=Game.SelectedEntity?.Direction??Direction.None;
+                    }
                     else
                         Game.TryScheduleAttack(logicalPosition, Direction);
                 }

@@ -26,8 +26,6 @@ namespace Game.Model
             }
         }
 
-        public PlayerScheduler Scheduler { get; protected set; } 
-
         public Snake(GameModel game, Point kabaPosition, Point hiroPosition, Point hanaPosition, Point naruPosition)
         {
             Kaba = new Kaba(game, kabaPosition);
@@ -35,7 +33,6 @@ namespace Game.Model
             Hana = new Hana(game, hanaPosition);
             Naru = new Naru(game, naruPosition);
             Game = game;
-            Scheduler = new PlayerScheduler(this);
         }
 
         public Snake(GameModel game, Kaba kaba, Hiro hiro, Hana hana, Naru naru)
@@ -45,7 +42,6 @@ namespace Game.Model
             Hana = hana;
             Naru = naru;
             Game = game;
-            Scheduler = new PlayerScheduler(this);
         }
 
         public Snake(GameModel game, Tuple<Point, Point, Point, Point> snakePosition):this(game,snakePosition.Item1,snakePosition.Item2,snakePosition.Item3,snakePosition.Item4)

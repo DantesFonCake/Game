@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace Game.Model
+namespace Game
 {
     public class SinglyLinkedList<T> : IEnumerable<T>
     {

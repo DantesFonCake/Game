@@ -204,7 +204,7 @@ namespace Game
         private void TimerTick(object sender, EventArgs e)
         {
             var logicalMouse = mainGameView.MouseLogicalPos;
-            Text = $"LogicalLocation: {MousePosition}, StepActionsLeft: {Game.PlayerScheduler.MaxActionCount - Game.PlayerScheduler.ActionCount}";
+            Text = $"LogicalLocation: {logicalMouse}, StepActionsLeft: {Game.PlayerScheduler.MaxActionCount - Game.PlayerScheduler.ActionCount}";
 
             foreach (var button in actionButtons)
             {

@@ -11,6 +11,7 @@ namespace Game.Model
     {
         public Tile[] Map;
         private readonly HashSet<Exit> exits = new HashSet<Exit>();
+        public bool Finished { get; protected set; }
         public int XSize { get; private set; }
         public int YSize { get; private set; }
         public Tile this[int x, int y]
@@ -102,11 +103,7 @@ namespace Game.Model
                 this[entity.Position].AddObject(entity);
                 if (Game == null || Game.Snake == null)
                     return;
-                if (exits.Select(x => x.Position).Contains(Game.Snake.Position))
-                {
-                    Game.MoveToNextLevel();
-                    return;
-                }
+                Finished = exits.Select(x => x.Position).Contains(Game.Snake.Position);
                 var newVisionField = Game.Snake.GetVisionField(this);
                 RecalculateVisionField(newVisionField);
             }

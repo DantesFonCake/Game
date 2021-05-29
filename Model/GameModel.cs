@@ -92,6 +92,8 @@ namespace Game.Model
                             CurrentLevel.OpenGates();
                     }
                 }
+                if (CurrentLevel.Finished)
+                    MoveToNextLevel();
                 IsStepInWork = false;
             }
         }
@@ -169,14 +171,15 @@ namespace Game.Model
             IsAccessible = false;
             ReadyToAttack = false;
             Timer.Stop();
+            Snake.Remove();
             var level = LevelCreator.FromLines(this, lines, out var aiControlled, out Tuple<Point, Point, Point, Point> snakePositions);
             AI.ReplaceControlled(aiControlled);
             CurrentLevel = level;
             if (Snake != null && snakePositions != null)
             {
                 var actionCount = PlayerScheduler.MaxActionCount;
-                PlayerScheduler = new PlayerScheduler(Snake,actionCount);
                 Snake.PlaceItself(level, snakePositions);
+                PlayerScheduler = new PlayerScheduler(Snake,actionCount);
                 level.RecalculateVisionField(Snake.GetVisionField(level));
             }
             IsPlayerStep = true;

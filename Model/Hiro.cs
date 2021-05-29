@@ -10,7 +10,7 @@ namespace Game.Model
             Name = "Hiro";
             Description = "Calm Archer. All attack are Physical";
             var pattern = new[] { new Size(-1, -1), new Size(0, 0), new Size(1, -1), new Size(1, 1), new Size(-1, 1) };
-            EAttack = new Attack(pattern, AttackType.Physical, 10, 6, true, 2);
+            EAttack = new Attack(pattern, AttackType.Physical, 15, 6, true, 2);
             pattern = new[] { new Size(0, 0) };
             QAttack = new Attack(pattern, AttackType.Physical, 30, 7, true, 3);
             rangeOfVision = 9;

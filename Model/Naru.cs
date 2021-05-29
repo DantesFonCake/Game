@@ -21,7 +21,7 @@ namespace Game.Model
             new Size(1,-1),new Size(1,1)};
             QAttack = new Attack(pattern, AttackType.Physical, 20, 3, false, 3);
             pattern = new[] { new Size(1, -1), new Size(1, 1) };
-            EAttack = new Attack(pattern, AttackType.Poison, 20, 3, false, 2);
+            EAttack = new Attack(pattern, AttackType.Poison, 25, 3, false, 2);
         }
 
         public Naru(GameModel game, int x, int y) : this(game, new Point(x, y))
